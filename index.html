@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Autentikasi - Login & Registrasi</title>
+    <title>Orilix Autentikasi</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .auth-container {
             min-height: 100vh;
-            background: #f8fafc;
+            background: #2563EA;
         }
         .dashboard-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -19,7 +19,7 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
         .avatar-default {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #2563EA;
         }
         .verified-badge {
             background: #10b981;
@@ -112,7 +112,7 @@
             <header class="bg-white shadow-sm">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Dashboard Pengguna</h1>
+                        <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Halo, Selamat datang</h1>
                         <button id="logout-btn" 
                                 class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm sm:text-base">
                             Keluar
@@ -270,7 +270,7 @@
     </div>
 
     <script>
-        // Supabase Configuration - GANTI DENGAN URL DAN KEY ANDA
+        // API
         const supabaseUrl = 'https://vnfimbhdoifpqmpwahrh.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZuZmltYmhkb2lmcHFtcHdhaHJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4Mjg5OTcsImV4cCI6MjA3MTQwNDk5N30.WQREDE-yFP0BnaZagEUKEI5s0iPxXGsnmMm4WdUfEpw';
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);

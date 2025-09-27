@@ -2,18 +2,14 @@
 <html lang="id">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Pemesanan Makanan — Demo</title>
-  <!-- Tailwind CDN (quick start). Untuk produksi gunakan build Tailwind. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pemesanan Makanan — FoodOrder</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase JS CDN -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
-    /* Hide scroll when modal or sidebar is open */
     body.modal-open, body.sidebar-open {
       overflow: hidden;
     }
-    /* Backdrop for sidebar */
     #sidebar-backdrop {
       display: none;
       position: fixed;
@@ -24,52 +20,149 @@
     #sidebar-backdrop.open {
       display: block;
     }
-    /* Error toast styling */
     #toast.error {
-      background-color: #dc2626; /* Bright red */
+      background-color: #dc2626;
       color: white;
       font-weight: bold;
-      font-size: 1rem; /* Larger text for readability */
+      font-size: 1rem;
       padding: 1rem 1.5rem;
       border-radius: 0.5rem;
-      top: 1rem; /* Position at top-center */
+      top: 1rem;
       left: 50%;
       transform: translateX(-50%);
       max-width: 90%;
       text-align: center;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     }
+    #categories {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    #categories::-webkit-scrollbar {
+      display: none;
+    }
+    #categories button {
+      scroll-snap-align: start;
+      flex: 0 0 auto;
+      margin-right: 0.75rem;
+    }
+    #produk-grid {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x proximity;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: #d1d5db transparent;
+    }
+    #produk-grid::-webkit-scrollbar {
+      height: 8px;
+    }
+    #produk-grid::-webkit-scrollbar-thumb {
+      background-color: #d1d5db;
+      border-radius: 4px;
+    }
+    #produk-grid article {
+      flex: 0 0 200px;
+      margin-right: 1rem;
+      scroll-snap-align: start;
+    }
+    #hero-slider {
+      position: relative;
+      overflow: hidden;
+    }
+    .slider-item {
+      display: none;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    .slider-item.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .slider-dots {
+      position: absolute;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.5rem;
+    }
+    .slider-dot {
+      width: 10px;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    .slider-dot.active {
+      background: white;
+    }
+    body {
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+    #search-container {
+      position: sticky;
+      top: 4.5rem;
+      z-index: 30;
+      background: white;
+      padding: 0.5rem 0;
+    }
+    #search-button {
+      cursor: pointer;
+    }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
+  <script>
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && ['I', 'C', 'J'].includes(e.key)) ||
+        (e.ctrlKey && e.key === 'U')
+      ) {
+        e.preventDefault();
+      }
+    });
+  </script>
   <!-- NAVBAR -->
   <header class="bg-white shadow sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
       <div class="flex items-center gap-3">
         <img src="https://via.placeholder.com/150x50?text=FoodOrder+Logo" alt="FoodOrder Logo" class="h-10 w-auto" onerror="this.style.display='none'"/>
         <div>
-          <div class="text-lg font-semibold">Fo</div>
-          <div class="text-xs text-gray-500"></div>
-        </div>
-      </div>
-      <div class="flex-1 mx-6">
-        <div class="relative">
-          <svg class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="11" cy="11" r="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <input id="search" type="search" placeholder="Cari makanan, merchant, kategori..." class="w-full border border-gray-200 rounded-xl py-2 pl-11 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500" />
+          <div class="text-lg font-semibold">FoodOrder</div>
+          <div class="text-xs text-gray-500">Pesan Makanan Online</div>
         </div>
       </div>
       <nav class="hidden md:flex items-center gap-3">
-        <button id="btn-filter" class="text-sm px-3 py-2 rounded-lg border border-gray-200">Filter</button>
-        <button id="btn-wishlist" class="text-sm px-3 py-2 rounded-lg border border-gray-200">Wishlist</button>
+        <button id="btn-filter" class="text-sm px-3 py-2 rounded-lg border border-gray-200 hover:bg-emerald-50">Filter</button>
+        <button id="btn-wishlist" class="text-sm px-3 py-2 rounded-lg border border-gray-200 hover:bg-emerald-50">Wishlist</button>
       </nav>
       <button id="mobile-menu-btn" class="md:hidden p-2">
         <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       </button>
     </div>
   </header>
+  <!-- SEARCH BAR -->
+  <div id="search-container" class="max-w-6xl mx-auto px-4">
+    <div class="relative">
+      <svg id="search-button" class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="11" cy="11" r="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <input id="search" type="search" placeholder="Cari makanan, merchant, kategori..." class="w-full border border-gray-200 rounded-xl py-2 pl-11 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500" />
+    </div>
+  </div>
   <!-- MOBILE SIDEBAR -->
   <div id="sidebar-backdrop"></div>
   <div id="mobile-sidebar" class="fixed inset-y-0 right-0 z-50 w-64 bg-white shadow-lg translate-x-full transition duration-300 ease-in-out md:hidden">
@@ -89,28 +182,133 @@
   </div>
   <!-- SLIDER / HERO -->
   <section class="max-w-6xl mx-auto px-4 py-6">
-    <div id="hero" class="relative rounded-xl overflow-hidden bg-gradient-to-r from-emerald-500 to-emerald-400 text-white h-44 flex items-center">
-      <div class="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1600&q=80&auto=format&fit=crop')] bg-cover bg-center"></div>
-      <div class="relative z-10 max-w-4xl mx-auto px-6 flex items-center justify-between w-full">
-        <div>
-          <h1 class="text-2xl md:text-3xl font-bold">Nikmati Makanan Favoritmu</h1>
-          <p class="mt-1 text-sm opacity-90">Pilih, pesan, dan chat langsung dengan operator lewat WhatsApp.</p>
+    <div id="hero-slider" class="relative rounded-xl overflow-hidden">
+      <div class="slider-item active">
+        <div class="bg-gradient-to-r from-emerald-500 to-emerald-400 text-white h-44 flex items-center relative">
+          <div class="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1600&q=80&auto=format&fit=crop')] bg-cover bg-center"></div>
+          <div class="relative z-10 max-w-4xl mx-auto px-6 flex items-center justify-between w-full">
+            <div>
+              <h1 class="text-2xl md:text-3xl font-bold">Nikmati Makanan Favoritmu</h1>
+              <p class="mt-1 text-sm opacity-90">Pilih, pesan, dan nikmati makanan lezat dengan cepat.</p>
+            </div>
+            <div class="hidden md:block">
+              <button id="hero-action-1" class="bg-white text-emerald-600 px-4 py-2 rounded-lg font-medium">Lihat Menu</button>
+            </div>
+          </div>
         </div>
-        <div class="hidden md:block">
-          <button id="hero-action" class="bg-white text-emerald-600 px-4 py-2 rounded-lg font-medium">Lihat Menu</button>
+      </div>
+      <div class="slider-item">
+        <div class="bg-gradient-to-r from-rose-500 to-rose-400 text-white h-44 flex items-center relative">
+          <div class="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1513106580091-1d82408b8f6a?w=1600&q=80&auto=format&fit=crop')] bg-cover bg-center"></div>
+          <div class="relative z-10 max-w-4xl mx-auto px-6 flex items-center justify-between w-full">
+            <div>
+              <h1 class="text-2xl md:text-3xl VITAMIN C">Promo Spesial Hari Ini!</h1>
+              <p class="mt-1 text-sm opacity-90">Dapatkan diskon hingga 50% untuk pesanan pertama.</p>
+            </div>
+            <div class="hidden md:block">
+              <button id="hero-action-2" class="bg-white text-rose-600 px-4 py-2 rounded-lg font-medium">Pesan Sekarang</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slider-item">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-400 text-white h-44 flex items-center relative">
+          <div class="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1600&q=80&auto=format&fit=crop')] bg-cover bg-center"></div>
+          <div class="relative z-10 max-w-4xl mx-auto px-6 flex items-center justify-between w-full">
+            <div>
+              <h1 class="text-2xl md:text-3xl font-bold">Kuliner Nusantara</h1>
+              <p class="mt-1 text-sm opacity-90">Jelajahi cita rasa lokal dari berbagai daerah.</p>
+            </div>
+            <div class="hidden md:block">
+              <button id="hero-action-3" class="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium">Eksplor Sekarang</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slider-dots"></div>
+    </div>
+  </section>
+  <!-- ADVANTAGES SECTION -->
+  <section class="max-w-6xl mx-auto px-4 py-6">
+    <h2 class="text-2xl md:text-3xl font-bold text-center mb-6">Mengapa Memilih FoodOrder?</h2>
+    <p class="text-center text-gray-600 mb-8">Kami menghadirkan pengalaman kuliner terbaik dengan layanan cepat dan terpercaya.</p>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="bg-white p-6 rounded-xl shadow-lg text-center hover:shadow-xl transition">
+        <svg class="h-12 w-12 mx-auto mb-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <h3 class="text-lg font-semibold">Pesanan Cepat</h3>
+        <p class="text-sm text-gray-600 mt-2">Proses pemesanan mudah dan pengiriman dalam hitungan menit.</p>
+      </div>
+      <div class="bg-white p-6 rounded-xl shadow-lg text-center hover:shadow-xl transition">
+        <svg class="h-12 w-12 mx-auto mb-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <h3 class="text-lg font-semibold">Layanan 24/7</h3>
+        <p class="text-sm text-gray-600 mt-2">Kami siap melayani kapan saja, siang maupun malam.</p>
+      </div>
+      <div class="bg-white p-6 rounded-xl shadow-lg text-center hover:shadow-xl transition">
+        <svg class="h-12 w-12 mx-auto mb-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a5 5 0 00-10 0v2m-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5m-2-2H5"/>
+        </svg>
+        <h3 class="text-lg font-semibold">Pembayaran Aman</h3>
+        <p class="text-sm text-gray-600 mt-2">Transaksi terjamin aman dengan teknologi terpercaya.</p>
+      </div>
+    </div>
+  </section>
+  <!-- POPULAR RESTAURANTS -->
+  <section class="max-w-6xl mx-auto px-4 py-6">
+    <h2 class="text-2xl md:text-3xl font-bold text-center mb-6">Restoran Populer</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1517248135467-2c7ed3ab7229?w=400&q=80&auto=format&fit=crop" alt="Restoran 1" class="h-32 w-full object-cover"/>
+        <div class="p-4">
+          <h3 class="text-lg font-semibold">Warung Makan Sederhana</h3>
+          <p class="text-sm text-gray-600">Masakan khas Indonesia dengan cita rasa otentik.</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1552566626-52f8b828add9?w=400&q=80&auto=format&fit=crop" alt="Restoran 2" class="h-32 w-full object-cover"/>
+        <div class="p-4">
+          <h3 class="text-lg font-semibold">Cafe Bintang</h3>
+          <p class="text-sm text-gray-600">Nikmati kopi dan makanan ringan dalam suasana cozy.</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1578474846511-04ba529f0d64?w=400&q=80&auto=format&fit=crop" alt="Restoran 3" class="h-32 w-full object-cover"/>
+        <div class="p-4">
+          <h3 class="text-lg font-semibold">Dapur Nusantara</h3>
+          <p class="text-sm text-gray-600">Hidangan tradisional dari berbagai daerah.</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1514933651103-4d3c5e7b89f7?w=400&q=80&auto=format&fit=crop" alt="Restoran 4" class="h-32 w-full object-cover"/>
+        <div class="p-4">
+          <h3 class="text-lg font-semibold">Resto Seaside</h3>
+          <p class="text-sm text-gray-600">Makanan laut segar dengan pemandangan indah.</p>
         </div>
       </div>
     </div>
   </section>
-  <!-- CATEGORY FILTERS -->
-  <section class="max-w-6xl mx-auto px-4">
-    <div id="categories" class="flex gap-3 overflow-auto py-3 scrollbar-hide"></div>
+  <!-- CATEGORY AND FILTER -->
+  <section class="max-w-6xl mx-auto px-4 py-4">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-semibold">Kategori</h2>
+      <div class="flex gap-2">
+        <select id="price-filter" class="border border-gray-200 rounded-md px-3 py-2 text-sm">
+          <option value="">Filter Harga</option>
+          <option value="0-25000">Rp0 - Rp25.000</option>
+          <option value="25001-50000">Rp25.001 - Rp50.000</option>
+          <option value="50001-100000">Rp50.001 - Rp100.000</option>
+          <option value="100001+">> Rp100.000</option>
+        </select>
+      </div>
+    </div>
+    <div id="categories" class="flex gap-3 py-3"></div>
   </section>
   <!-- MAIN GRID -->
   <main class="max-w-6xl mx-auto px-4 py-6">
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="produk-grid">
-      <!-- cards injected here -->
-    </div>
+    <div id="produk-grid" class="flex gap-4"></div>
   </main>
   <!-- PRODUCT MODAL -->
   <div id="modal-produk" class="fixed inset-0 hidden z-50 flex items-center justify-center p-4">
@@ -138,8 +336,8 @@
           </div>
         </div>
         <div class="mt-4 grid grid-cols-2 gap-2">
-          <button onclick="openCheckout()" class="col-span-2 bg-rose-600 text-white py-2 rounded-lg">Pesan Sekarang</button>
-          <button onclick="closeModal()" class="col-span-2 border border-gray-200 py-2 rounded-lg">Tutup</button>
+          <button onclick="openCheckout()" class="col-span-2 bg-rose-600 text-white py-2 rounded-lg hover:bg-rose-700">Pesan Sekarang</button>
+          <button onclick="closeModal()" class="col-span-2 border border-gray-200 py-2 rounded-lg hover:bg-gray-100">Tutup</button>
         </div>
       </div>
     </div>
@@ -147,7 +345,7 @@
   <!-- CHECKOUT MODAL -->
   <div id="modal-checkout" class="fixed inset-0 hidden z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/40" onclick="closeCheckout()"></div>
-    <form id="checkout-form" class="relative bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden p-4" onsubmit="event.preventDefault(); handleCheckout();">
+    <div class="relative bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden p-4">
       <h3 class="text-lg font-semibold">Form Checkout</h3>
       <p class="text-xs text-gray-500">Isi data lengkap untuk proses order via WhatsApp.</p>
       <div class="mt-3 space-y-3">
@@ -160,18 +358,16 @@
           <input id="input-alamat" required type="text" placeholder="Jl. Contoh No 1, RT 01 / RW 02" class="w-full border border-gray-200 rounded-md px-3 py-2 mt-1 text-sm" />
         </div>
         <div>
-          <label class="text-xs text-gray-600">Nomor HP-Whatsaap</label>
+          <label class="text-xs text-gray-600">Nomor HP-WhatsApp</label>
           <input id="input-hp" required type="tel" placeholder="0812xxxx" class="w-full border border-gray-200 rounded-md px-3 py-2 mt-1 text-sm" />
         </div>
-        <div id="checkout-summary" class="text-sm text-gray-700 bg-gray-50 p-3 rounded-md">
-          <!-- summary injected -->
-        </div>
+        <div id="checkout-summary" class="text-sm text-gray-700 bg-gray-50 p-3 rounded-md"></div>
       </div>
       <div class="mt-4 flex gap-2">
-        <button type="submit" class="flex-1 bg-emerald-600 text-white py-2 rounded-md">Proses</button>
-        <button type="button" onclick="closeCheckout()" class="flex-1 border border-gray-200 py-2 rounded-md">Batal</button>
+        <button onclick="handleCheckout()" class="flex-1 bg-emerald-600 text-white py-2 rounded-md hover:bg-emerald-700">Proses</button>
+        <button onclick="closeCheckout()" class="flex-1 border border-gray-200 py-2 rounded-md hover:bg-gray-100">Batal</button>
       </div>
-    </form>
+    </div>
   </div>
   <!-- SMALL TOAST -->
   <div id="toast" class="fixed hidden bg-black text-white text-sm px-4 py-2 rounded-md shadow-lg z-50"></div>
@@ -218,24 +414,20 @@
       </div>
     </div>
   </footer>
-  <!-- SCRIPT: Supabase logic, render, interactions -->
+  <!-- SCRIPT -->
   <script>
-    /* --------------- CONFIG: ganti ini dengan credential Supabase Anda --------------- */
     const SUPABASE_URL = "https://dlnenwglsmfyhdysmqdc.supabase.co";
     const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsbmVud2dsc21meWhkeXNtcWRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMTM5ODIsImV4cCI6MjA3MTY4OTk4Mn0.oWKClbQFN5RDS_MkFkPFbwel-LBmD8iGJX1KxN3Db0U";
-    /* ------------------------------------------------------------------------------- */
     if (!SUPABASE_URL || !SUPABASE_ANON) {
       showErrorToast("Konfigurasi Supabase tidak lengkap. Hubungi admin.");
       throw new Error("Supabase credential belum diisi. Ganti SUPABASE_URL dan SUPABASE_ANON.");
     }
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-    // State
     let produkData = [];
     let operatorData = [];
     let kategoriSet = new Set();
     let selectedProduk = null;
     let selectedQuantity = 1;
-    // WA rotation pointer stored in localStorage to persist between sessions
     const WA_INDEX_KEY = "wa_rotation_index";
     function getWaIndex() {
       const v = parseInt(localStorage.getItem(WA_INDEX_KEY) || "0", 10);
@@ -246,7 +438,6 @@
       localStorage.setItem(WA_INDEX_KEY, String(next));
       return next;
     }
-    // UTIL
     function rupiah(num) {
       if (num == null) {
         showErrorToast("Harga produk tidak valid.");
@@ -260,14 +451,14 @@
       t.classList.remove("hidden", "error");
       if (isError) {
         t.classList.add("error");
-        ms = 3500; // Longer duration for errors
+        ms = 3500;
       }
       setTimeout(() => t.classList.add("hidden"), ms);
     }
     function showErrorToast(text) {
       showToast(text, 3500, true);
     }
-    // MOBILE SIDEBAR CONTROLS
+    // MOBILE SIDEBAR
     const sidebar = document.getElementById("mobile-sidebar");
     const backdrop = document.getElementById("sidebar-backdrop");
     document.getElementById("mobile-menu-btn").addEventListener("click", () => {
@@ -327,7 +518,34 @@
         console.error("Decrease quantity failed", e);
       }
     });
-    // LOAD DATA FROM SUPABASE
+    // SLIDER LOGIC
+    const sliderItems = document.querySelectorAll('.slider-item');
+    const sliderDotsContainer = document.querySelector('.slider-dots');
+    let currentSlide = 0;
+    function createSliderDots() {
+      sliderItems.forEach((_, index) => {
+        const dot = document.createElement('div');
+        dot.classList.add('slider-dot');
+        if (index === 0) dot.classList.add('active');
+        dot.addEventListener('click', () => goToSlide(index));
+        sliderDotsContainer.appendChild(dot);
+      });
+    }
+    function updateSlider() {
+      sliderItems.forEach((item, index) => {
+        item.classList.toggle('active', index === currentSlide);
+      });
+      document.querySelectorAll('.slider-dot').forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentSlide);
+      });
+    }
+    function goToSlide(index) {
+      currentSlide = (index + sliderItems.length) % sliderItems.length;
+      updateSlider();
+    }
+    setInterval(() => goToSlide(currentSlide + 1), 5000);
+    createSliderDots();
+    // LOAD DATA
     async function loadData() {
       try {
         const { data: produk, error: err1 } = await supabaseClient
@@ -360,7 +578,6 @@
         if (!operatorData.length) {
           showErrorToast("Tidak ada operator tersedia. Hubungi admin.");
         }
-        // build categories
         kategoriSet = new Set(produkData.map(p => p.kategori || "Umum"));
         renderCategories();
         renderProduk(produkData);
@@ -378,12 +595,12 @@
           throw new Error("Categories element not found");
         }
         wrap.innerHTML = "";
-        // "Semua" button
         const btnAll = document.createElement("button");
-        btnAll.className = "px-3 py-2 bg-white border border-gray-200 rounded-full text-sm whitespace-nowrap";
+        btnAll.className = "px-4 py-2 bg-white border border-gray-200 rounded-full text-sm whitespace-nowrap hover:bg-emerald-50";
         btnAll.innerText = "Semua";
         btnAll.onclick = () => {
           try {
+            document.getElementById("price-filter").value = "";
             renderProduk(produkData);
           } catch (e) {
             showErrorToast("Gagal menampilkan semua produk.");
@@ -393,12 +610,12 @@
         wrap.appendChild(btnAll);
         Array.from(kategoriSet).forEach(k => {
           const btn = document.createElement("button");
-          btn.className = "px-3 py-2 bg-white border border-gray-200 rounded-full text-sm whitespace-nowrap";
+          btn.className = "px-4 py-2 bg-white border border-gray-200 rounded-full text-sm whitespace-nowrap hover:bg-emerald-50";
           btn.innerText = k;
           btn.onclick = () => {
             try {
               const filtered = produkData.filter(p => (p.kategori || "Umum") === k);
-              renderProduk(filtered);
+              applyPriceFilter(filtered);
             } catch (e) {
               showErrorToast(`Gagal menampilkan produk kategori ${k}.`);
               console.error("Render category failed", e);
@@ -411,6 +628,27 @@
         console.error("renderCategories failed", e);
       }
     }
+    // PRICE FILTER
+    function applyPriceFilter(data) {
+      const priceFilter = document.getElementById("price-filter").value;
+      let filtered = data;
+      if (priceFilter) {
+        const [min, max] = priceFilter.split("-").map(Number);
+        filtered = data.filter(p => {
+          if (max) return p.harga >= min && p.harga <= max;
+          return p.harga >= min;
+        });
+      }
+      renderProduk(filtered);
+    }
+    document.getElementById("price-filter").addEventListener("change", () => {
+      try {
+        applyPriceFilter(produkData);
+      } catch (e) {
+        showErrorToast("Gagal menerapkan filter harga.");
+        console.error("Price filter failed", e);
+      }
+    });
     // RENDER PRODUCT GRID
     function renderProduk(list) {
       try {
@@ -421,7 +659,7 @@
         }
         grid.innerHTML = "";
         if (!list || !list.length) {
-          grid.innerHTML = `<div class="col-span-full text-center text-gray-500 py-8">Produk tidak ditemukan</div>`;
+          grid.innerHTML = `<div class="flex-1 text-center text-gray-500 py-8">Produk tidak ditemukan</div>`;
           return;
         }
         for (const item of list) {
@@ -449,7 +687,7 @@
           price.className = "text-sm font-bold text-rose-600";
           price.innerText = rupiah(item.harga);
           const btn = document.createElement("button");
-          btn.className = "text-xs bg-emerald-600 text-white px-3 py-1 rounded-md";
+          btn.className = "text-xs bg-emerald-600 text-white px-3 py-1 rounded-md hover:bg-emerald-700";
           btn.innerText = "Pesan";
           btn.onclick = (e) => {
             try {
@@ -483,11 +721,11 @@
       }
     }
     // SEARCH
-    document.getElementById("search").addEventListener("input", (ev) => {
+    function performSearch() {
       try {
-        const v = ev.target.value.trim().toLowerCase();
+        const v = document.getElementById("search").value.trim().toLowerCase();
         if (!v) {
-          renderProduk(produkData);
+          applyPriceFilter(produkData);
           return;
         }
         if (v.length < 2) {
@@ -500,12 +738,14 @@
           (p.merchant || "").toLowerCase().includes(v) ||
           (p.kategori || "").toLowerCase().includes(v)
         );
-        renderProduk(filtered);
+        applyPriceFilter(filtered);
       } catch (e) {
         showErrorToast("Gagal melakukan pencarian.");
         console.error("Search failed", e);
       }
-    });
+    }
+    document.getElementById("search").addEventListener("input", performSearch);
+    document.getElementById("search-button").addEventListener("click", performSearch);
     // MODAL CONTROLS
     function openModal(item) {
       try {
@@ -514,7 +754,7 @@
           return;
         }
         selectedProduk = item;
-        selectedQuantity = 1; // Default quantity
+        selectedQuantity = 1;
         const modal = document.getElementById("modal-produk");
         if (!modal) {
           showErrorToast("Gagal membuka detail produk.");
@@ -599,7 +839,6 @@
         console.error("closeCheckout failed", e);
       }
     }
-    // VALIDASI NOMOR HP
     function normalizeHp(raw) {
       try {
         if (!raw) {
@@ -617,7 +856,6 @@
         return "";
       }
     }
-    // INSERT ORDER TO SUPABASE
     async function insertOrderToSupabase(orderData) {
       try {
         if (!orderData || !orderData.produk_id || !orderData.nama_pelanggan) {
@@ -638,7 +876,6 @@
         return false;
       }
     }
-    // HANDLE CHECKOUT
     async function handleCheckout() {
       try {
         const nama = document.getElementById("input-nama")?.value.trim();
@@ -669,7 +906,6 @@
           return;
         }
         const totalHarga = selectedProduk.harga * selectedQuantity;
-        // Save to Supabase
         const orderData = {
           produk_id: selectedProduk.id,
           produk_nama: selectedProduk.nama,
@@ -683,8 +919,7 @@
           created_at: new Date().toISOString()
         };
         const saved = await insertOrderToSupabase(orderData);
-        if (!saved) return; // Stop if saving to Supabase fails
-        // Proceed to WhatsApp
+        if (!saved) return;
         const list = [
           `Halo Admin, saya ingin pesan:`,
           `Nama: ${nama}`,
@@ -732,15 +967,8 @@
         console.error("handleCheckout failed", e);
       }
     }
-    // INIT
-    try {
-      loadData();
-    } catch (e) {
-      showErrorToast("Gagal memulai aplikasi. Periksa koneksi Anda.");
-      console.error("Initialization failed", e);
-    }
     // HERO ACTION SCROLL
-    document.getElementById("hero-action")?.addEventListener("click", () => {
+    document.getElementById("hero-action-1")?.addEventListener("click", () => {
       try {
         const grid = document.getElementById("produk-grid");
         if (!grid) {
@@ -753,7 +981,33 @@
         console.error("Hero action scroll failed", e);
       }
     });
-    // ACCESSIBILITY: CLOSE MODALS AND SIDEBAR WITH ESC
+    document.getElementById("hero-action-2")?.addEventListener("click", () => {
+      try {
+        const grid = document.getElementById("produk-grid");
+        if (!grid) {
+          showErrorToast("Gagal menavigasi ke daftar produk.");
+          throw new Error("Produk-grid element not found");
+        }
+        grid.scrollIntoView({ behavior: "smooth", block: "start" });
+      } catch (e) {
+        showErrorToast("Gagal menavigasi ke daftar produk.");
+        console.error("Hero action scroll failed", e);
+      }
+    });
+    document.getElementById("hero-action-3")?.addEventListener("click", () => {
+      try {
+        const grid = document.getElementById("produk-grid");
+        if (!grid) {
+          showErrorToast("Gagal menavigasi ke daftar produk.");
+          throw new Error("Produk-grid element not found");
+        }
+        grid.scrollIntoView({ behavior: "smooth", block: "start" });
+      } catch (e) {
+        showErrorToast("Gagal menavigasi ke daftar produk.");
+        console.error("Hero action scroll failed", e);
+      }
+    });
+    // ACCESSIBILITY
     document.addEventListener("keydown", (e) => {
       try {
         if (e.key === "Escape") {
@@ -768,6 +1022,13 @@
         console.error("Escape key handler failed", e);
       }
     });
+    // INIT
+    try {
+      loadData();
+    } catch (e) {
+      showErrorToast("Gagal memulai aplikasi. Periksa koneksi Anda.");
+      console.error("Initialization failed", e);
+    }
   </script>
 </body>
 </html>

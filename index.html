@@ -1,1 +1,762 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DUNNAK - Autentikasi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* Smooth scrolling and base font */
+    html {
+      scroll-behavior: smooth;
+    }
 
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    body.modal-open {
+      overflow: hidden;
+    }
+
+    /* Toast styles */
+    #toast {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 90%;
+      z-index: 60;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      font-size: 0.875rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      opacity: 0;
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+    }
+
+    #toast.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #toast.success {
+      background-color: rgba(16, 185, 129, 0.9);
+      color: white;
+    }
+
+    #toast.error {
+      background-color: rgba(239, 68, 68, 0.9);
+      color: white;
+    }
+
+    #toast i {
+      font-size: 1rem;
+    }
+
+    /* Form styles */
+    .auth-form {
+      max-width: 480px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px);
+      padding: 2.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(229, 231, 235, 0.3);
+      transition: transform 0.3s ease;
+    }
+
+    .auth-form:hover {
+      transform: translateY(-4px);
+    }
+
+    .auth-form input {
+      width: 100%;
+      padding: 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 400;
+      outline: none;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+    }
+
+    .auth-form input:focus {
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+      transform: scale(1.02);
+    }
+
+    .auth-form button {
+      width: 100%;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    }
+
+    .auth-form button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Profile section */
+    .profile-section {
+      max-width: 480px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px);
+      padding: 2.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(229, 231, 235, 0.3);
+      transition: transform 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .profile-section:hover {
+      transform: translateY(-4px);
+    }
+
+    .profile-banner {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 120px;
+      background-size: cover;
+      background-position: center;
+      z-index: 1;
+    }
+
+    .profile-banner::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      z-index: 2;
+    }
+
+    .profile-content {
+      position: relative;
+      z-index: 3;
+    }
+
+    .profile-avatar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+      height: 80px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .profile-avatar:hover {
+      transform: scale(1.1);
+    }
+
+    .profile-avatar i {
+      color: white;
+      font-size: 2rem;
+    }
+
+    .account-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 1rem;
+      background: #10b981;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      transition: transform 0.3s ease;
+    }
+
+    .account-badge:hover {
+      transform: scale(1.05);
+    }
+
+    /* Certification badge */
+    .certification-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background: rgba(241, 245, 249, 0.8);
+      border-radius: 0.5rem;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .certification-badge:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .certification-badge img {
+      height: 2rem;
+      width: auto;
+    }
+
+    .certification-badge span {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #1f2937;
+    }
+
+    /* CAPTCHA styles */
+    .captcha-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(249, 250, 251, 0.8);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(229, 231, 235, 0.3);
+      backdrop-filter: blur(4px);
+    }
+
+    .captcha-canvas {
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 0.25rem;
+    }
+
+    .captcha-refresh, .captcha-audio {
+      cursor: pointer;
+      color: #6b7280;
+      transition: color 0.3s ease, transform 0.2s ease;
+    }
+
+    .captcha-refresh:hover, .captcha-audio:hover {
+      color: #10b981;
+      transform: scale(1.1);
+    }
+
+    /* Show password toggle */
+    .password-toggle {
+      cursor: pointer;
+      color: #6b7280;
+      transition: color 0.3s ease, transform 0.2s ease;
+    }
+
+    .password-toggle:hover {
+      color: #10b981;
+      transform: scale(1.1);
+    }
+
+    /* Header and footer */
+    header {
+      transition: box-shadow 0.3s ease;
+    }
+
+    header:hover {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    nav a {
+      transition: color 0.3s ease, transform 0.2s ease;
+    }
+
+    nav a:hover {
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <script>
+    // Prevent right-click and certain keyboard shortcuts
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && ['I', 'C', 'J'].includes(e.key)) ||
+        (e.ctrlKey && e.key === 'U')
+      ) {
+        e.preventDefault();
+      }
+    });
+  </script>
+  <!-- HEADER -->
+  <header class="bg-white shadow-md border-b border-gray-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgZ8y1qrBVlJ0dcgOvB6K4iAMdnuTZ4dscQ_1RGrBKU2HcjKoN8DvPSg7KOkMctU2JAfxjDMU3EGxVxIuHXkbmDDJ2-mza-gxYVkq35RYw4kR94iWe1Fu8rhm9g8RwSqakU8Mw5rDMFnki5urzubHh9fTiT7yxr1i6NduseMm9im4qPICXLf1_w8E11oYZN/s3264/20250927_164816.png" alt="Logo Dunnak" class="h-14 w-auto" loading="lazy" onerror="this.style.background='linear-gradient(to right, #10b981, #059669);'" />
+        <div>
+          <div class="text-2xl font-bold text-gray-900">DUNNAK</div>
+          <div class="text-sm text-gray-500 font-medium">Mau makan atau jajan, semua ada!</div>
+        </div>
+      </div>
+      <nav class="flex items-center gap-4">
+        <a href="index.html" class="text-base font-semibold text-gray-700 hover:text-emerald-600 focus:ring-2 focus:ring-emerald-500 transition-colors">Kembali ke Beranda</a>
+      </nav>
+    </div>
+  </header>
+  <!-- MAIN CONTENT -->
+  <main class="max-w-7xl mx-auto px-4 py-16">
+    <div id="auth-container" class="auth-form hidden">
+      <h2 id="auth-title" class="text-3xl font-bold text-center mb-8 text-gray-900">Masuk ke Dunnak</h2>
+      <div class="space-y-6">
+        <div>
+          <label for="email" class="text-sm font-medium text-gray-700">Email</label>
+          <input id="email" type="email" placeholder="Masukkan email" class="mt-2" required aria-describedby="email-error" />
+          <p id="email-error" class="text-sm text-red-600 mt-2 hidden"></p>
+        </div>
+        <div class="relative">
+          <label for="password" class="text-sm font-medium text-gray-700">Kata Sandi</label>
+          <input id="password" type="password" placeholder="Masukkan kata sandi" class="mt-2" required aria-describedby="password-error" />
+          <span id="password-toggle" class="password-toggle absolute right-3 top-10 text-sm" role="button" aria-label="Tampilkan kata sandi">
+            <i class="fas fa-eye"></i>
+          </span>
+          <p id="password-error" class="text-sm text-red-600 mt-2 hidden"></p>
+        </div>
+        <div id="register-name" class="hidden">
+          <label for="name" class="text-sm font-medium text-gray-700">Nama Lengkap</label>
+          <input id="name" type="text" placeholder="Masukkan nama lengkap" class="mt-2" aria-describedby="name-error" />
+          <p id="name-error" class="text-sm text-red-600 mt-2 hidden"></p>
+        </div>
+        <div>
+          <label for="captcha" class="text-sm font-medium text-gray-700">Masukkan Kode CAPTCHA</label>
+          <div class="captcha-container mt-2">
+            <canvas id="captcha-canvas" width="150" height="50" class="captcha-canvas" aria-label="Gambar kode CAPTCHA"></canvas>
+            <button id="captcha-refresh" class="captcha-refresh" aria-label="Segarkan kode CAPTCHA">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+            <button id="captcha-audio" class="captcha-audio" aria-label="Dengarkan kode CAPTCHA">
+              <i class="fas fa-volume-up"></i>
+            </button>
+          </div>
+          <input id="captcha" type="text" placeholder="Masukkan kode CAPTCHA" class="mt-2" required aria-describedby="captcha-error" />
+          <p id="captcha-error" class="text-sm text-red-600 mt-2 hidden"></p>
+        </div>
+        <button id="auth-submit" class="bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500">Masuk</button>
+        <p class="text-center text-sm text-gray-600">
+          <span id="auth-toggle-text">Belum punya akun?</span>
+          <button id="auth-toggle" class="text-emerald-600 hover:underline focus:ring-2 focus:ring-emerald-500 font-medium">Daftar</button>
+        </p>
+      </div>
+    </div>
+    <div id="profile-container" class="profile-section hidden">
+      <div class="profile-banner"></div>
+      <div class="profile-content">
+        <h2 class="text-3xl font-bold text-center mb-8 text-gray-900">Profil Pengguna</h2>
+        <div class="flex justify-center mb-6">
+          <div class="profile-avatar">
+            <i class="fas fa-user"></i>
+          </div>
+        </div>
+        <div class="space-y-6">
+          <div>
+            <p class="text-sm font-medium text-gray-600">Nama</p>
+            <p id="profile-name" class="text-lg font-semibold text-gray-800"></p>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-600">Email</p>
+            <p id="profile-email" class="text-lg font-semibold text-gray-800"></p>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-600">Jenis Akun</p>
+            <p id="profile-account-type" class="text-lg font-semibold text-gray-800"><span class="account-badge">Personal</span></p>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-600">ID Pengguna</p>
+            <p id="profile-user-id" class="text-lg font-semibold text-gray-800"></p>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-600">Terakhir Masuk</p>
+            <p id="profile-last-login" class="text-lg font-semibold text-gray-800"></p>
+          </div>
+          <button id="logout-button" class="bg-rose-600 text-white hover:bg-rose-700 focus:ring-2 focus:ring-rose-500">Keluar</button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- FOOTER -->
+  <footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div class="md:col-span-2">
+          <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEioCgC6JQ-pd6mvQ1OvlJSOGqd8-45q7P9K0ejBvIt-XEXcayAs6zpFN6c1D2ejDgR72xdGDZL9yt2yLWl7oRDHQ8Gf2L3Q35VNFlimqORpaOgBDiqJMBGfTLHokc0dFwezZ85HLBx7_rGveEOMDI78CG81kg_mpczYMHdYapbijiLVpqPj2Ep_QrPJwx6H/s3264/20250927_164837.png" alt="Dunnak Logo" class="h-10 w-auto mb-4" loading="lazy" onerror="this.style.background='linear-gradient(to right, #10b981, #059669);'" />
+          <p class="text-sm text-gray-300 mb-4 font-medium">Dunnak adalah platform pemesanan makanan online yang menghubungkan Anda dengan berbagai restoran terbaik. Pesan makanan favoritmu dengan mudah dan cepat!</p>
+          <div class="certification-badge">
+            <img src="https://via.placeholder.com/32x32?text=Cert" alt="Sertifikasi Lembaga" loading="lazy" onerror="this.src='https://via.placeholder.com/32x32?text=Cert';" />
+            <span>Certified by Food Safety Authority</span>
+          </div>
+          <div class="flex space-x-4 mt-4">
+            <a href="#" aria-label="Facebook" class="text-gray-300 hover:text-emerald-400 focus:ring-2 focus:ring-emerald-500 transition-colors">
+              <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>
+            </a>
+            <a href="#" aria-label="Twitter" class="text-gray-300 hover:text-emerald-400 focus:ring-2 focus:ring-emerald-500 transition-colors">
+              <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="#" aria-label="Instagram" class="text-gray-300 hover:text-emerald-400 focus:ring-2 focus:ring-emerald-500 transition-colors">
+              <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            </a>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Navigasi</h3>
+          <ul class="space-y-2 text-sm text-gray-300">
+            <li><a href="index.html" class="hover:text-emerald-400 focus:ring-2 focus:ring-emerald-500 transition-colors">Beranda</a></li>
+            <li><a href="index.html#menu" class="hover:text-emerald-400 focus:ring-2 focus:ring-emerald-500 transition-colors">Menu</a></li>
+            <li><a href="index.html#wishlist" class="hover:text-emerald-400 focus:ring-2 focus:ring-emerald-500 transition-colors">Wishlist</a></li>
+            <li><a href="index.html#kontak" class="hover:text-emerald-400 focus:ring-2 focus:ring-emerald-500 transition-colors">Kontak</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Kontak Kami</h3>
+          <ul class="space-y-2 text-sm text-gray-300">
+            <li><a href="mailto:support@dunnak.com" class="hover:text-emerald-400 focus:ring-2 focus:ring-emerald-500 transition-colors">support@dunnak.com</a></li>
+            <li>Jl. Raya Gununglangit - Kalibening</li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-8 border-t border-gray-700 pt-6 text-center text-sm text-gray-400">
+        <p>&copy; 2025 PT. Mobilitas Karya Kita. All rights reserved.</p>
+        <p class="mt-2">Dibuat dengan <span class="text-red-500">&hearts;</span> untuk pecinta kuliner.</p>
+      </div>
+    </div>
+  </footer>
+  <!-- TOAST -->
+  <div id="toast" class="fixed hidden" role="alert" aria-live="assertive"></div>
+  <!-- SCRIPT -->
+  <script>
+    const SUPABASE_URL = "https://dlnenwglsmfyhdysmqdc.supabase.co";
+    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsbmVud2dsc21meWhkeXNtcWRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMTM5ODIsImV4cCI6MjA3MTY4OTk4Mn0.oWKClbQFN5RDS_MkFkPFbwel-LBmD8iGJX1KxN3Db0U";
+    
+    // Operator can customize this URL to match platform branding
+    const BANNER_IMAGE_URL = "https://images.unsplash.com/photo-1513104890138-7c749659a680?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80"; // Change this to your branding image URL
+    
+    if (!SUPABASE_URL || !SUPABASE_ANON) {
+      showToast("Konfigurasi Supabase tidak lengkap. Hubungi admin.", "error");
+      throw new Error("Supabase credential belum diisi. Ganti SUPABASE_URL dan SUPABASE_ANON.");
+    }
+    
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    let isLoginMode = true;
+    let captchaCode = '';
+    let captchaToken = '';
+    let captchaTimestamp = 0;
+
+    function showToast(text, type = "success", duration = 3000) {
+      const toast = document.getElementById("toast");
+      const icon = type === "success" ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-circle"></i>';
+      toast.innerHTML = `${icon} ${text}`;
+      toast.className = `fixed ${type} show`;
+      setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => {
+          toast.className = "fixed hidden";
+          toast.innerHTML = "";
+        }, 300);
+      }, duration);
+    }
+
+    function clearErrors() {
+      document.getElementById("email-error").classList.add("hidden");
+      document.getElementById("password-error").classList.add("hidden");
+      document.getElementById("name-error").classList.add("hidden");
+      document.getElementById("captcha-error").classList.add("hidden");
+    }
+
+    function validateEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function validatePassword(password) {
+      return password.length >= 7 && password.length <= 50;
+    }
+
+    function validateName(name) {
+      return name.trim().length > 0;
+    }
+
+    function generateToken() {
+      return Array(16).fill(0).map(() => Math.random().toString(36).substr(2, 9)).join('');
+    }
+
+    function generateCaptcha() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      captchaCode = '';
+      for (let i = 0; i < 6; i++) {
+        captchaCode += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      captchaToken = generateToken();
+      captchaTimestamp = Date.now();
+
+      const canvas = document.getElementById("captcha-canvas");
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Add noise
+      for (let i = 0; i < 50; i++) {
+        ctx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.3})`;
+        ctx.beginPath();
+        ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 1, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+
+      // Add lines
+      for (let i = 0; i < 3; i++) {
+        ctx.strokeStyle = `rgba(0, 0, 0, ${Math.random() * 0.5 + 0.2})`;
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.stroke();
+      }
+
+      // Draw distorted text
+      ctx.font = "24px monospace";
+      ctx.fillStyle = "#1f2937";
+      for (let i = 0; i < captchaCode.length; i++) {
+        ctx.save();
+        ctx.translate(20 + i * 20, 35 + Math.random() * 10 - 5);
+        ctx.rotate((Math.random() - 0.5) * 0.3);
+        ctx.fillText(captchaCode[i], 0, 0);
+        ctx.restore();
+      }
+
+      document.getElementById("captcha").value = '';
+    }
+
+    function generateAudioCaptcha() {
+      const utterance = captchaCode.split('').join(' ');
+      const audio = new Audio(`data:audio/wav;base64,${btoa(utterance)}`);
+      audio.play();
+    }
+
+    function validateCaptcha(input, token, timestamp) {
+      const timeValid = (Date.now() - timestamp) < 120000; // 2 minutes
+      return timeValid && input.trim().toUpperCase() === captchaCode.toUpperCase() && token === captchaToken;
+    }
+
+    function formatTimestamp(timestamp) {
+      if (!timestamp) return "—";
+      const date = new Date(timestamp);
+      const options = {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Asia/Jakarta'
+      };
+      return date.toLocaleString('id-ID', options).replace(',', '');
+    }
+
+    function toggleAuthMode() {
+      isLoginMode = !isLoginMode;
+      const authTitle = document.getElementById("auth-title");
+      const authSubmit = document.getElementById("auth-submit");
+      const authToggleText = document.getElementById("auth-toggle-text");
+      const authToggle = document.getElementById("auth-toggle");
+      const registerName = document.getElementById("register-name");
+      clearErrors();
+      document.getElementById("email").value = "";
+      document.getElementById("password").value = "";
+      document.getElementById("name").value = "";
+      document.getElementById("captcha").value = "";
+      document.getElementById("password").type = "password";
+      document.getElementById("password-toggle").innerHTML = '<i class="fas fa-eye"></i>';
+      generateCaptcha();
+      if (isLoginMode) {
+        authTitle.textContent = "Masuk ke Dunnak";
+        authSubmit.textContent = "Masuk";
+        authToggleText.textContent = "Belum punya akun?";
+        authToggle.textContent = "Daftar";
+        registerName.classList.add("hidden");
+      } else {
+        authTitle.textContent = "Daftar ke Dunnak";
+        authSubmit.textContent = "Daftar";
+        authToggleText.textContent = "Sudah punya akun?";
+        authToggle.textContent = "Masuk";
+        registerName.classList.remove("hidden");
+      }
+    }
+
+    function togglePasswordVisibility() {
+      const passwordInput = document.getElementById("password");
+      const toggleIcon = document.getElementById("password-toggle");
+      if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        toggleIcon.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        toggleIcon.setAttribute("aria-label", "Sembunyikan kata sandi");
+      } else {
+        passwordInput.type = "password";
+        toggleIcon.innerHTML = '<i class="fas fa-eye"></i>';
+        toggleIcon.setAttribute("aria-label", "Tampilkan kata sandi");
+      }
+    }
+
+    async function checkAuthState() {
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (user) {
+          document.getElementById("auth-container").classList.add("hidden");
+          document.getElementById("profile-container").classList.remove("hidden");
+          document.getElementById("profile-name").textContent = user.user_metadata?.name || "Pengguna";
+          document.getElementById("profile-email").textContent = user.email || "—";
+          document.getElementById("profile-account-type").innerHTML = `<span class="account-badge">${user.user_metadata?.account_type || "Personal"}</span>`;
+          document.getElementById("profile-user-id").textContent = user.id || "—";
+          document.getElementById("profile-last-login").textContent = formatTimestamp(user.last_sign_in_at);
+          
+          // Set custom banner image
+          const banner = document.querySelector('.profile-banner');
+          if (BANNER_IMAGE_URL) {
+            banner.style.backgroundImage = `url('${BANNER_IMAGE_URL}')`;
+            // Fallback to gradient if image fails
+            const img = new Image();
+            img.src = BANNER_IMAGE_URL;
+            img.onerror = () => {
+              banner.style.backgroundImage = 'linear-gradient(to right, #10b981, #059669)';
+            };
+          } else {
+            banner.style.backgroundImage = 'linear-gradient(to right, #10b981, #059669)';
+          }
+        } else {
+          document.getElementById("auth-container").classList.remove("hidden");
+          document.getElementById("profile-container").classList.add("hidden");
+          generateCaptcha();
+        }
+      } catch (e) {
+        showToast("Gagal memeriksa status autentikasi.", "error");
+        console.error("checkAuthState failed", e);
+      }
+    }
+
+    async function handleAuth() {
+      try {
+        clearErrors();
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+        const name = document.getElementById("name").value.trim();
+        const captchaInput = document.getElementById("captcha").value;
+
+        if (!validateEmail(email)) {
+          document.getElementById("email-error").textContent = "Email tidak valid.";
+          document.getElementById("email-error").classList.remove("hidden");
+          generateCaptcha();
+          return;
+        }
+
+        if (!validatePassword(password)) {
+          document.getElementById("password-error").textContent = "Kata sandi harus 7-50 karakter.";
+          document.getElementById("password-error").classList.remove("hidden");
+          generateCaptcha();
+          return;
+        }
+
+        if (!isLoginMode && !validateName(name)) {
+          document.getElementById("name-error").textContent = "Nama harus diisi.";
+          document.getElementById("name-error").classList.remove("hidden");
+          generateCaptcha();
+          return;
+        }
+
+        if (!validateCaptcha(captchaInput, captchaToken, captchaTimestamp)) {
+          document.getElementById("captcha-error").textContent = "Kode CAPTCHA salah atau kadaluarsa.";
+          document.getElementById("captcha-error").classList.remove("hidden");
+          generateCaptcha();
+          return;
+        }
+
+        if (isLoginMode) {
+          const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (error) {
+            showToast("Gagal masuk: " + error.message, "error");
+            generateCaptcha();
+            return;
+          }
+          showToast("Berhasil masuk!", "success");
+          checkAuthState();
+        } else {
+          const { data, error } = await supabaseClient.auth.signUp({
+            email,
+            password,
+            options: {
+              data: { name, account_type: "Personal" }
+            }
+          });
+          if (error) {
+            showToast("Gagal mendaftar: " + error.message, "error");
+            generateCaptcha();
+            return;
+          }
+          showToast("Pendaftaran berhasil! Silakan masuk.", "success");
+          toggleAuthMode();
+        }
+      } catch (e) {
+        showToast("Terjadi kesalahan. Coba lagi.", "error");
+        console.error("handleAuth failed", e);
+        generateCaptcha();
+      }
+    }
+
+    async function handleLogout() {
+      try {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) {
+          showToast("Gagal keluar: " + error.message, "error");
+          return;
+        }
+        showToast("Berhasil keluar!", "success");
+        checkAuthState();
+      } catch (e) {
+        showToast("Gagal keluar. Coba lagi.", "error");
+        console.error("handleLogout failed", e);
+      }
+    }
+
+    // Event listeners
+    document.getElementById("auth-toggle").addEventListener("click", toggleAuthMode);
+    document.getElementById("auth-submit").addEventListener("click", handleAuth);
+    document.getElementById("logout-button").addEventListener("click", handleLogout);
+    document.getElementById("password-toggle").addEventListener("click", togglePasswordVisibility);
+    document.getElementById("captcha-refresh").addEventListener("click", generateCaptcha);
+    document.getElementById("captcha-audio").addEventListener("click", generateAudioCaptcha);
+
+    // Accessibility
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && document.activeElement.tagName === "INPUT") {
+        handleAuth();
+      }
+      if (e.key === "Escape") {
+        clearErrors();
+        document.getElementById("email").value = "";
+        document.getElementById("password").value = "";
+        document.getElementById("name").value = "";
+        document.getElementById("captcha").value = "";
+        document.getElementById("password").type = "password";
+        document.getElementById("password-toggle").innerHTML = '<i class="fas fa-eye"></i>';
+        document.getElementById("password-toggle").setAttribute("aria-label", "Tampilkan kata sandi");
+        generateCaptcha();
+      }
+    });
+
+    // Initialize
+    checkAuthState();
+  </script>

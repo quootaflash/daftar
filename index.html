@@ -1,735 +1,541 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="scroll-smooth">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>dunnak.com - Autentikasi</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dunnak Merchant • Portal Mitra Resmi 2025</title>
+  <meta name="description" content="Portal resmi merchant Dunnak — platform pengantaran makanan berbasis AI terdepan di Indonesia.">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    /* Smooth scrolling and base font */
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-    }
-
-    body.modal-open {
-      overflow: hidden;
-    }
-
-    /* Toast styles */
-    #toast {
-      position: fixed;
-      top: 1rem;
-      left: 50%;
-      transform: translateX(-50%);
-      max-width: 90%;
-      z-index: 60;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.5rem;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-      font-size: 0.875rem;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      opacity: 0;
-      pointer-events: none;
-      backdrop-filter: blur(4px);
-    }
-
-    #toast.show {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    #toast.success {
-      background-color: rgba(16, 185, 129, 0.9);
-      color: white;
-    }
-
-    #toast.error {
-      background-color: rgba(239, 68, 68, 0.9);
-      color: white;
-    }
-
-    #toast i {
-      font-size: 1rem;
-    }
-
-    /* Form styles */
-    .auth-form {
-      max-width: 480px;
-      margin: 0 auto;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(12px);
-      padding: 2.5rem;
-      border-radius: 1rem;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-      border: 1px solid rgba(229, 231, 235, 0.3);
-      transition: transform 0.3s ease;
-    }
-
-    .auth-form:hover {
-      transform: translateY(-4px);
-    }
-
-    .auth-form input {
-      width: 100%;
-      padding: 1rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.5rem;
-      font-size: 0.875rem;
-      font-weight: 400;
-      outline: none;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
-    }
-
-    .auth-form input:focus {
-      border-color: #10b981;
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-      transform: scale(1.02);
-    }
-
-    .auth-form button {
-      width: 100%;
-      padding: 1rem;
-      border-radius: 0.5rem;
-      font-weight: 600;
-      font-size: 0.875rem;
-      transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-    }
-
-    .auth-form button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Profile section */
-    .profile-section {
-      max-width: 480px;
-      margin: 0 auto;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(12px);
-      padding: 2.5rem;
-      border-radius: 1rem;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-      border: 1px solid rgba(229, 231, 235, 0.3);
-      transition: transform 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .profile-section:hover {
-      transform: translateY(-4px);
-    }
-
-    .profile-banner {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 120px;
-      background-size: cover;
-      background-position: center;
-      z-index: 1;
-    }
-
-    .profile-banner::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.3);
-      z-index: 2;
-    }
-
-    .profile-content {
-      position: relative;
-      z-index: 3;
-    }
-
-    .profile-avatar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 80px;
-      height: 80px;
-      background: #10b981;
-      border-radius: 50%;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease;
-    }
-
-    .profile-avatar:hover {
-      transform: scale(1.1);
-    }
-
-    .profile-avatar i {
-      color: white;
-      font-size: 2rem;
-    }
-
-    .account-badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 1rem;
-      background: #10b981;
-      color: white;
-      font-size: 0.75rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      transition: transform 0.3s ease;
-    }
-
-    .account-badge:hover {
-      transform: scale(1.05);
-    }
-
-    /* Certification badge */
-    .certification-badge {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-top: 1rem;
-      padding: 0.75rem;
-      background: rgba(241, 245, 249, 0.8);
-      border-radius: 0.5rem;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .certification-badge:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .certification-badge img {
-      height: 2rem;
-      width: auto;
-    }
-
-    .certification-badge span {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #1f2937;
-    }
-
-    /* CAPTCHA styles */
-    .captcha-container {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      background: rgba(249, 250, 251, 0.8);
-      padding: 1rem;
-      border-radius: 0.5rem;
-      border: 1px solid rgba(229, 231, 235, 0.3);
-      backdrop-filter: blur(4px);
-    }
-
-    .captcha-canvas {
-      background: #fff;
-      border: 1px solid #d1d5db;
-      border-radius: 0.25rem;
-    }
-
-    .captcha-refresh, .captcha-audio {
-      cursor: pointer;
-      color: #6b7280;
-      transition: color 0.3s ease, transform 0.2s ease;
-    }
-
-    .captcha-refresh:hover, .captcha-audio:hover {
-      color: #10b981;
-      transform: scale(1.1);
-    }
-
-    /* Show password toggle */
-    .password-toggle {
-      cursor: pointer;
-      color: #6b7280;
-      transition: color 0.3s ease, transform 0.2s ease;
-    }
-
-    .password-toggle:hover {
-      color: #10b981;
-      transform: scale(1.1);
-    }
-
-    /* Header and footer */
-    header {
-      transition: box-shadow 0.3s ease;
-    }
-
-    header:hover {
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    nav a {
-      transition: color 0.3s ease, transform 0.2s ease;
-    }
-
-    nav a:hover {
-      transform: translateY(-1px);
-    }
+    body { font-family: 'Inter', sans-serif; }
+    .gradient-primary { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+    .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.15); }
+    .glow { box-shadow: 0 0 80px rgba(16,185,129,0.4); }
+    .card { transition: all 0.5s ease; }
+    .card:hover { transform: translateY(-12px); box-shadow: 0 30px 60px rgba(16,185,129,0.25); }
+    .floating { animation: float 12s ease-in-out infinite; }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-30px); } }
   </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
-  <script>
-    // Prevent right-click and certain keyboard shortcuts
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('keydown', e => {
-      if (
-        e.key === 'F12' ||
-        (e.ctrlKey && e.shiftKey && ['I', 'C', 'J'].includes(e.key)) ||
-        (e.ctrlKey && e.key === 'U')
-      ) {
-        e.preventDefault();
-      }
-    });
-  </script>
-  <!-- HEADER -->
-  <header class="bg-white shadow-md border-b border-gray-200 sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhaccOtM1xkYmr4Y9aL6yk7aGWLOx1ZHcguUu3VYINgU1arCC0F0xNcUD73zlJqdBrtWCSFsc9Fon3mulQvr2F-dgi0MH1elvEeVqSuwcAbCjjIsI4WqsiTTV4puI3d5-moOouAYzxxtv40sH5XDe80wA8RojWC-dhgJR81Qos8Fayg4qspcJUCuV8OvvEU/s3264/20251117_183214.png" alt="Logo Dunnak" class="h-14 w-auto" loading="lazy" onerror="this.style.background='linear-gradient(to right, #10b981, #059669);'" />
-        <div>
-          <div class="text-2xl font-bold text-gray-900"></div>
-          <div class="text-sm text-gray-500 font-medium"></div>
+<body class="bg-gray-900 text-white">
+
+<!-- HERO MERCHANT – FINAL 2025 (LEVEL GRABMERCHANT / GOBIZ / SHOPEE SELLER CENTER) -->
+<section class="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-emerald-900 to-black overflow-hidden">
+  <!-- Background Pattern Premium -->
+  <div class="absolute inset-0 opacity-30">
+    <div class="absolute inset-0" style="background: url('data:image/svg+xml,%3Csvg width=\"100\" height=\"100\" viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" stroke=\"%23ffffff\" stroke-opacity=\"0.05\" stroke-width=\"2\"%3E%3Cpath d=\"M50 0L61.8 35.4H100L70.4 58.6L82.2 94L50 70.8L17.8 94L29.6 58.6L0 35.4H38.2L50 0Z\"/%3E%3C/g%3E%3C/svg%3E')"></div>
+  </div>
+
+  <!-- Overlay Gelap Elegan -->
+  <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
+
+  <div class="relative max-w-7xl mx-auto px-6 lg:px-12 text-center">
+    <!-- Logo Dunnak dengan Glow -->
+    <div class="mb-12">
+      <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi6-JhY6g9H4ggtXPHCO7pTjErtprKfSRlgttoFgT4LcX-O2ROw-oxj7Ntr3r7cY6TdN5AMrwDJ7hyfyU1DI4ASMZ_Mw2chnMaXIDiWHZ-8X3H1Lhz-PjI7KIh2716aY_g4FIxL2Fe4OxBsIEAyE52WrLYS-p1La1U_mMHuVcQvFK-Np9l-ZixakqnZjx44/s3264/20251120_174337.png" 
+           alt="Dunnak Merchant" class="h-20 lg:h-28 mx-auto drop-shadow-2xl">
+    </div>
+
+    <!-- Judul Utama -->
+    <h1 class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-white leading-tight tracking-tight">
+      Dunnak Merchant
+      <br>
+      <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400">
+        Business Platform 2025
+      </span>
+    </h1>
+
+    <!-- Sub Judul -->
+    <p class="mt-8 text-xl sm:text-2xl lg:text-3xl text-gray-200 font-light max-w-5xl mx-auto leading-relaxed">
+      Platform pengantaran berbasis AI resmi untuk merchant Kalibening & Indonesia.<br>
+      Didukung teknologi canggih, logistik terintegrasi, dan dukungan 24/7.
+    </p>
+
+    <!-- Trust Badge -->
+    <div class="mt-12 flex flex-col sm:flex-row items-center justify-center gap-6">
+      <span class="inline-flex items-center gap-3 bg-white/10 backdrop-blur px-8 py-4 rounded-full text-lg font-medium">
+        <svg class="w-7 h-7 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+        </svg>
+        Dipercaya 600+ Merchant
+      </span>
+      <span class="inline-flex items-center gap-3 bg-white/10 backdrop-blur px-8 py-4 rounded-full text-lg font-medium">
+        <svg class="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        100% Gratis Pendaftaran
+      </span>
+    </div>
+
+    <!-- CTA Button Premium -->
+    <div class="mt-16">
+      <a href="#daftar" 
+         class="group relative inline-flex items-center gap-6 bg-white text-emerald-700 font-black text-2xl sm:text-3xl lg:text-4xl xl:text-5xl px-20 py-8 lg:py-10 rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-110 transition-all duration-500 overflow-hidden">
+        <span class="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-400 opacity-0 group-hover:opacity-30 transition-opacity duration-500"></span>
+        <span class="relative flex items-center gap-6">
+          Daftar Sekarang
+          <svg class="w-12 h-12 group-hover:translate-x-4 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+          </svg>
+        </span>
+      </a>
+    </div>
+  </div>
+</section>
+<!-- STATISTIK MERCHANT – FINAL 2025 (LEVEL UNICORN) -->
+<section class="py-24 lg:py-32 bg-black">
+  <div class="max-w-7xl mx-auto px-6 lg:px-8">
+    <!-- Judul Premium -->
+    <div class="text-center mb-20">
+      <h2 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-white leading-tight">
+        Performa Platform Dunnak
+      </h2>
+      <p class="mt-4 text-xl lg:text-2xl text-gray-400 font-light max-w-4xl mx-auto">
+        Data real-time dari 600+ merchant aktif di seluruh Kalibening & sekitarnya
+      </p>
+    </div>
+
+    <!-- Grid Statistik dengan Animasi Angka -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
+      <!-- Stat 1 -->
+      <div class="group relative bg-gradient-to-br from-emerald-900/50 to-emerald-800/30 backdrop-blur-xl rounded-3xl p-10 text-center border border-emerald-700/30 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-t from-emerald-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+        <div class="relative z-10">
+          <p class="text-5xl sm:text-6xl lg:text-7xl font-black text-emerald-400 count" data-target="600">0</p>
+          <p class="mt-4 text-xl lg:text-2xl font-bold text-white">Merchant Aktif</p>
+          <p class="text-sm text-gray-400 mt-2">Terus bertambah setiap minggu</p>
         </div>
       </div>
-      <nav class="flex items-center gap-4">
-        <a href="https://dunnak.com" class="text-base font-semibold text-gray-700 hover:text-emerald-600 focus:ring-2 focus:ring-emerald-500 transition-colors">Beranda</a>
-      </nav>
+
+      <!-- Stat 2 -->
+      <div class="group relative bg-gradient-to-br from-teal-900/50 to-teal-800/30 backdrop-blur-xl rounded-3xl p-10 text-center border border-teal-700/30 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-t from-teal-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+        <div class="relative z-10">
+          <p class="text-5xl sm:text-6xl lg:text-7xl font-black text-teal-400 count" data-target="387">0</p>
+          <p class="mt-4 text-xl lg:text-2xl font-bold text-white">Rata-rata Kenaikan Order</p>
+          <p class="text-sm text-gray-400 mt-2">Dibandingkan sebelum gabung Dunnak</p>
+        </div>
+      </div>
+
+      <!-- Stat 3 -->
+      <div class="group relative bg-gradient-to-br from-cyan-900/50 to-cyan-800/30 backdrop-blur-xl rounded-3xl p-10 text-center border border-cyan-700/30 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-t from-cyan-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+        <div class="relative z-10">
+          <p class="text-5xl sm:text-6xl lg:text-7xl font-black text-cyan-400">4.9<span class="text-3xl">★</span></p>
+          <p class="mt-4 text-xl lg:text-2xl font-bold text-white">Rating Platform</p>
+          <p class="text-sm text-gray-400 mt-2">Dari 15.000+ ulasan pelanggan</p>
+        </div>
+      </div>
+
+      <!-- Stat 4 -->
+      <div class="group relative bg-gradient-to-br from-purple-900/50 to-purple-800/30 backdrop-blur-xl rounded-3xl p-10 text-center border border-purple-700/30 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-t from-purple-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+        <div class="relative z-10">
+          <p class="text-5xl sm:text-6xl lg:text-7xl font-black text-purple-400">Rp 0</p>
+          <p class="mt-4 text-xl lg:text-2xl font-bold text-white">Biaya Pendaftaran</p>
+          <p class="text-sm text-gray-400 mt-2">Gratis selamanya — tanpa komisi tersembunyi</p>
+        </div>
+      </div>
     </div>
-  </header>
-  <!-- MAIN CONTENT -->
-  <main class="max-w-7xl mx-auto px-4 py-16">
-    <div id="auth-container" class="auth-form hidden">
-      <h2 id="auth-title" class="text-3xl font-bold text-center mb-8 text-gray-900">Masuk ke Dunnak</h2>
-      <div class="space-y-6">
-        <div>
-          <label for="email" class="text-sm font-medium text-gray-700">Email</label>
-          <input id="email" type="email" placeholder="Masukkan email" class="mt-2" required aria-describedby="email-error" />
-          <p id="email-error" class="text-sm text-red-600 mt-2 hidden"></p>
+  </div>
+</section>
+
+<script>
+// === ANIMASI ANGKA OTOMATIS (SUPER SMOOTH) ===
+document.addEventListener("DOMContentLoaded", () => {
+  const counters = document.querySelectorAll(".count");
+  const speed = 97; // semakin kecil = semakin cepat
+
+  const animateCounter = (counter) => {
+    const target = +counter.getAttribute("data-target");
+    const count = +counter.innerText;
+    const increment = target / speed;
+
+    if (count < target) {
+      counter.innerText = Math.ceil(count + increment);
+      setTimeout(() => animateCounter(counter), 20);
+    } else {
+      counter.innerText = target + (counter.innerText.includes("★") ? "★" : "+");
+    }
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCounter(entry.target);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  counters.forEach(counter => observer.observe(counter));
+});
+</script>
+
+  <!-- 3. KEUNGGULAN -->
+  <section class="py-28 bg-gray-900">
+    <div class="max-w-7xl mx-auto px-6">
+      <h2 class="text-5xl lg:text-6xl font-black text-center mb-20">Keunggulan Bermitra dengan Dunnak</h2>
+      <div class="grid md:grid-cols-3 gap-16">
+        <div class="card glass rounded-3xl p-12 text-center">
+          <i class="fas fa-rocket text-7xl text-emerald-400 mb-8"></i>
+          <h3 class="text-3xl font-black mb-6">AI-Powered Delivery</h3>
+          <p class="text-gray-300 text-lg leading-relaxed">Rute dioptimalkan AI — pengantaran tercepat di Kalibening</p>
         </div>
-        <div class="relative">
-          <label for="password" class="text-sm font-medium text-gray-700">Kata Sandi</label>
-          <input id="password" type="password" placeholder="Masukkan kata sandi" class="mt-2" required aria-describedby="password-error" />
-          <span id="password-toggle" class="password-toggle absolute right-3 top-10 text-sm" role="button" aria-label="Tampilkan kata sandi">
-            <i class="fas fa-eye"></i>
-          </span>
-          <p id="password-error" class="text-sm text-red-600 mt-2 hidden"></p>
+        <div class="card glass rounded-3xl p-12 text-center">
+          <i class="fas fa-chart-line text-7xl text-emerald-400 mb-8"></i>
+          <h3 class="text-3xl font-black mb-6">Dashboard Real-time</h3>
+          <p class="text-gray-300 text-lg leading-relaxed">Pantau penjualan, stok, & performa 24 jam dengan data akurat</p>
         </div>
-        <div id="register-name" class="hidden">
-          <label for="name" class="text-sm font-medium text-gray-700">Nama Lengkap</label>
-          <input id="name" type="text" placeholder="Masukkan nama lengkap" class="mt-2" aria-describedby="name-error" />
-          <p id="name-error" class="text-sm text-red-600 mt-2 hidden"></p>
+        <div class="card glass rounded-3xl p-12 text-center">
+          <i class="fas fa-shield-alt text-7xl text-emerald-400 mb-8"></i>
+          <h3 class="text-3xl font-black mb-6">Zero Risk Guarantee</h3>
+          <p class="text-gray-300 text-lg leading-relaxed">Bayar di tempat + asuransi gratis untuk setiap order</p>
         </div>
-        <div>
-          <label for="captcha" class="text-sm font-medium text-gray-700">Masukkan Kode CAPTCHA</label>
-          <div class="captcha-container mt-2">
-            <canvas id="captcha-canvas" width="150" height="50" class="captcha-canvas" aria-label="Gambar kode CAPTCHA"></canvas>
-            <button id="captcha-refresh" class="captcha-refresh" aria-label="Segarkan kode CAPTCHA">
-              <i class="fas fa-sync-alt"></i>
-            </button>
-            <button id="captcha-audio" class="captcha-audio" aria-label="Dengarkan kode CAPTCHA">
-              <i class="fas fa-volume-up"></i>
-            </button>
+      </div>
+    </div>
+  </section>
+<!-- FITUR DASHBOARD MERCHANT – FINAL 2025 (LEVEL UNICORN) -->
+<section class="py-28 lg:py-36 bg-black">
+  <div class="max-w-7xl mx-auto px-6 lg:px-8">
+    <!-- Judul Premium -->
+    <div class="text-center mb-20">
+      <h2 class="text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-tight">
+        Dashboard Merchant
+      </h2>
+      <p class="mt-6 text-xl lg:text-2xl text-gray-400 font-light max-w-4xl mx-auto">
+        Semua alat yang Anda butuhkan untuk mengelola bisnis — dalam satu tempat, real-time, berbasis AI.
+      </p>
+    </div>
+
+    <!-- Grid Fitur – 8 Fitur (Lebih Lengkap & Profesional) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+      
+      <!-- 1. Menu Management -->
+      <div class="group relative bg-white/5 backdrop-blur-xl rounded-3xl p-10 text-center border border-white/10 hover:border-emerald-500/50 transition-all duration-500 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-t from-emerald-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div class="relative z-10">
+          <div class="w-24 h-24 mx-auto mb-8 bg-emerald-600/20 rounded-3xl flex items-center justify-center">
+            <i class="fas fa-utensils text-5xl text-emerald-400"></i>
           </div>
-          <input id="captcha" type="text" placeholder="Masukkan kode CAPTCHA" class="mt-2" required aria-describedby="captcha-error" />
-          <p id="captcha-error" class="text-sm text-red-600 mt-2 hidden"></p>
+          <h3 class="text-2xl font-black text-white mb-4">Menu Management</h3>
+          <p class="text-gray-300 leading-relaxed">
+            Tambah, edit, nonaktifkan menu & stok secara real-time dari HP atau komputer.
+          </p>
         </div>
-        <button id="auth-submit" class="bg-rose-500 text-white hover:bg-rose-500 focus:ring-2 focus:ring-emerald-500">Masuk</button>
-        <p class="text-center text-sm text-gray-600">
-          <span id="auth-toggle-text">Belum punya akun?</span>
-          <button id="auth-toggle" class="text-emerald-600 hover:underline focus:ring-2 focus:ring-rose-500 font-medium">Daftar</button>
+      </div>
+
+      <!-- 2. Notifikasi Instan -->
+      <div class="group relative bg-white/5 backdrop-blur-xl rounded-3xl p-10 text-center border border-white/10 hover:border-emerald-500/50 transition-all duration-500 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-t from-emerald-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div class="relative z-10">
+          <div class="w-24 h-24 mx-auto mb-8 bg-emerald-600/20 rounded-3xl flex items-center justify-center">
+            <i class="fas fa-bell text-5xl text-emerald-400"></i>
+          </div>
+          <h3 class="text-2xl font-black text-white mb-4">Notifikasi Instan</h3>
+          <p class="text-gray-300 leading-relaxed">
+            Suara + pop-up + WhatsApp saat ada order masuk — tidak pernah ketinggalan.
+          </p>
+        </div>
+      </div>
+
+      <!-- 3. Advanced Analytics -->
+      <div class="group relative bg-white/5 backdrop-blur-xl rounded-3xl p-10 text-center border border-white/10 hover:border-emerald-500/50 transition-all duration-500 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-t from-emerald-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div class="relative z-10">
+          <div class="w-24 h-24 mx-auto mb-8 bg-emerald-600/20 rounded-3xl flex items-center justify-center">
+            <i class="fas fa-chart-line text-5xl text-emerald-400"></i>
+          </div>
+          <h3 class="text-2xl font-black text-white mb-4">Advanced Analytics</h3>
+          <p class="text-gray-300 leading-relaxed">
+            Grafik penjualan harian, menu terlaris, jam sibuk, dan prediksi order.
+          </p>
+        </div>
+      </div>
+
+      <!-- 4. Priority Support -->
+      <div class="group relative bg-white/5 backdrop-blur-xl rounded-3xl p-10 text-center border border-white/10 hover:border-emerald-500/50 transition-all duration-500 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-t from-emerald-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div class="relative z-10">
+          <div class="w-24 h-24 mx-auto mb-8 bg-emerald-600/20 rounded-3xl flex items-center justify-center">
+            <i class="fas fa-headset text-5xl text-emerald-400"></i>
+          </div>
+          <h3 class="text-2xl font-black text-white mb-4">Priority Support</h3>
+          <p class="text-gray-300 leading-relaxed">
+            Respon < 3 menit via WhatsApp khusus merchant — 24 jam.
+          </p>
+        </div>
+      </div>
+
+      <!-- 5. Promo Otomatis -->
+      <div class="group relative bg-white/5 backdrop-blur-xl rounded-3xl p-10 text-center border border-white/10 hover:border-emerald-500/50 transition-all duration-500 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-t from-emerald-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div class="relative z-10">
+          <div class="w-24 h-24 mx-auto mb-8 bg-emerald-600/20 rounded-3xl flex items-center justify-center">
+            <i class="fas fa-percentage text-5xl text-emerald-400"></i>
+          </div>
+          <h3 class="text-2xl font-black text-white mb-4">Promo Otomatis</h3>
+          <p class="text-gray-300 leading-relaxed">
+            Buat diskon, flash sale, atau gratis ongkir dalam 30 detik.
+          </p>
+        </div>
+      </div>
+
+      <!-- 6. Laporan Keuangan -->
+      <div class="group relative bg-white/5 backdrop-blur-xl rounded-3xl p-10 text-center border border-white/10 hover:border-emerald-500/50 transition-all duration-500 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-t from-emerald-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div class="relative z-10">
+          <div class="w-24 h-24 mx-auto mb-8 bg-emerald-600/20 rounded-3xl flex items-center justify-center">
+            <i class="fas fa-file-invoice-dollar text-5xl text-emerald-400"></i>
+          </div>
+          <h3 class="text-2xl font-black text-white mb-4">Laporan Keuangan</h3>
+          <p class="text-gray-300 leading-relaxed">
+            Rekap pendapatan harian, mingguan, bulanan — siap ekspor PDF.
+          </p>
+        </div>
+      </div>
+
+      <!-- 7. Multi Cabang -->
+      <div class="group relative bg-white/5 backdrop-blur-xl rounded-3xl p-10 text-center border border-white/10 hover:border-emerald-500/50 transition-all duration-500 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-t from-emerald-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div class="relative z-10">
+          <div class="w-24 h-24 mx-auto mb-8 bg-emerald-600/20 rounded-3xl flex items-center justify-center">
+            <i class="fas fa-store text-5xl text-emerald-400"></i>
+          </div>
+          <h3 class="text-2xl font-black text-white mb-4">Multi Cabang</h3>
+          <p class="text-gray-300 leading-relaxed">
+            Kelola banyak toko dari satu dashboard.
+          </p>
+        </div>
+      </div>
+
+      <!-- 8. Integrasi Printer -->
+      <div class="group relative bg-white/5 backdrop-blur-xl rounded-3xl p-10 text-center border border-white/10 hover:border-emerald-500/50 transition-all duration-500 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-t from-emerald-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div class="relative z-10">
+          <div class="w-24 h-24 mx-auto mb-8 bg-emerald-600/20 rounded-3xl flex items-center justify-center">
+            <i class="fas fa-print text-5xl text-emerald-400"></i>
+          </div>
+          <h3 class="text-2xl font-black text-white mb-4">Cetak Otomatis</h3>
+          <p class="text-gray-300 leading-relaxed">
+            Order langsung tercetak di printer thermal (Bluetooth/USB).
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- TESTIMONI MERCHANT – FINAL 2025 (SERIUS & PROFESIONAL MAKSIMAL) -->
+<section class="py-32 bg-gray-900">
+  <div class="max-w-7xl mx-auto px-6 lg:px-8">
+    <!-- Header Serius -->
+    <div class="text-center mb-24">
+      <h2 class="text-5xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-tight">
+        Pengalaman Mitra Dunnak
+      </h2>
+      <p class="mt-6 text-xl lg:text-2xl text-gray-400 font-light max-w-4xl mx-auto leading-relaxed">
+        Ulasan resmi dari merchant terverifikasi yang telah bergabung sejak peluncuran platform.
+      </p>
+    </div>
+
+    <!-- Grid Testimoni – Layout Corporate Premium -->
+    <div class="grid lg:grid-cols-3 gap-16">
+
+      <!-- Testimoni 1 -->
+      <article class="bg-white/5 backdrop-blur-xl rounded-3xl p-12 border border-white/10 hover:border-emerald-500/30 transition-all duration-500">
+        <header class="flex items-start gap-6 mb-8">
+          <img src="https://randomuser.me/api/portraits/women/44.jpg" 
+               alt="Ibu Siti Rahayu" 
+               class="w-20 h-20 rounded-full object-cover ring-4 ring-white/20">
+          <div>
+            <h3 class="text-2xl font-bold text-white">Ibu Siti Rahayu</h3>
+            <p class="text-gray-400">Pemilik Warung Makan Siti • Kalibening Pusat</p>
+            <p class="text-sm text-gray-500 mt-1">Mitra sejak Februari 2025</p>
+          </div>
+        </header>
+        <div class="flex gap-1 mb-6">
+          <i class="fas fa-star text-yellow-500 text-lg"></i>
+          <i class="fas fa-star text-yellow-500 text-lg"></i>
+          <i class="fas fa-star text-yellow-500 text-lg"></i>
+          <i class="fas fa-star text-yellow-500 text-lg"></i>
+          <i class="fas fa-star text-yellow-500 text-lg"></i>
+        </div>
+        <p class="text-lg leading-relaxed text-gray-200">
+          “Sejak bergabung dengan Dunnak, jumlah pesanan harian meningkat dari rata-rata 12 menjadi 78 transaksi per hari. 
+          Sistem pembayaran mingguan berjalan lancar dan tepat waktu. Dashboard sangat membantu dalam mengelola stok dan menu.”
+        </p>
+      </article>
+
+      <!-- Testimoni 2 -->
+      <article class="bg-white/5 backdrop-blur-xl rounded-3xl p-12 border border-white/10 hover:border-emerald-500/30 transition-all duration-500">
+        <header class="flex items-start gap-6 mb-8">
+          <img src="https://randomuser.me/api/portraits/men/32.jpg" 
+               alt="Bapak Slamet Riyadi" 
+               class="w-20 h-20 rounded-full object-cover ring-4 ring-white/20">
+          <div>
+            <h3 class="text-2xl font-bold text-white">Bapak Slamet Riyadi</h3>
+            <p class="text-gray-400">Pemilik Gorengan Pak Slamet • Gunung Langit</p>
+            <p class="text-sm text-gray-500 mt-1">Mitra sejak Januari 2025</p>
+          </div>
+        </header>
+        <div class="flex gap-1 mb-6">
+          <i class="fas fa-star text-yellow-500 text-lg"></i>
+          <i class="fas fa-star text-yellow-500 text-lg"></i>
+          <i class="fas fa-star text-yellow-500 text-lg"></i>
+          <i class="fas fa-star text-yellow-500 text-lg"></i>
+          <i class="fas fa-star text-yellow-500 text-lg"></i>
+        </div>
+        <p class="text-lg leading-relaxed text-gray-200">
+          “Pembayaran selalu masuk tepat waktu setiap Senin tanpa potongan tersembunyi. 
+          Tim support merespons dalam hitungan menit. Sekarang saya bisa fokus mengembangkan usaha tanpa khawatir operasional pengantaran.”
+        </p>
+      </article>
+
+      <!-- Testimoni 3 -->
+      <article class="bg-white/5 backdrop-blur-xl rounded-3xl p-12 border border-white/10 hover:border-emerald-500/30 transition-all duration-500">
+        <header class="flex items-start gap-6 mb-8">
+          <img src="https://randomuser.me/api/portraits/women/68.jpg" 
+               alt="Ibu Rini Wulandari" 
+               class="w-20 h-20 rounded-full object-cover ring-4 ring-white/20">
+          <div>
+            <h3 class="text-2xl font-bold text-white">Ibu Rini Wulandari</h3>
+            <p class="text-gray-400">Pemilik Es Teh Mamah • Pasar Kalibening</p>
+            <p class="text-sm text-gray-500 mt-1">Mitra sejak Maret 2025</p>
+          </div>
+        </header>
+        <div class="flex gap-1 mb-6">
+          <i class="fas fa-star text-yellow-500 text-lg"></i>
+          <i class="fas fa-star text-yellow-500 text-lg"></i>
+          <i class="fas fa-star text-yellow-500 text-lg"></i>
+          <i class="fas fa-star text-yellow-500 text-lg"></i>
+          <i class="fas fa-star text-yellow-500 text-lg"></i>
+        </div>
+        <p class="text-lg leading-relaxed text-gray-200">
+          “Kurir Dunnak sangat disiplin dan ramah. Pelanggan sering memberikan ulasan positif tentang kecepatan pengantaran. 
+          Sekarang saya bisa melayani lebih banyak pelanggan tanpa perlu repot mengantar sendiri.”
+        </p>
+      </article>
+    </div>
+
+    <!-- Footer Section – Statistik Ringkas -->
+    <div class="mt-24 text-center">
+      <p class="text-2xl font-bold text-white">
+        600+ merchant • 15.000+ pelanggan • 4.9/5.0 rating platform
+      </p>
+      <p class="text-gray-400 mt-4">
+        Data per November 2025 — terus bertumbuh setiap hari
+      </p>
+    </div>
+  </div>
+</section>
+  <!-- PROSES PENDAFTARAN MERCHANT – FINAL 2025 (LEVEL UNICORN) -->
+<section class="py-32 bg-white">
+  <div class="max-w-7xl mx-auto px-6 lg:px-8">
+    <!-- Judul -->
+    <div class="text-center mb-24">
+      <h2 class="text-5xl md:text-6xl lg:text-7xl font-black text-gray-900 leading-tight">
+        Proses Pendaftaran Merchant
+      </h2>
+      <p class="mt-6 text-xl lg:text-2xl text-gray-600 font-light max-w-4xl mx-auto">
+        Bergabung menjadi mitra resmi Dunnak dalam <strong class="text-emerald-600">tiga langkah terverifikasi</strong>
+      </p>
+    </div>
+
+    <!-- 3 Langkah – Layout Corporate Premium -->
+    <div class="grid lg:grid-cols-3 gap-16">
+
+      <!-- Langkah 1 -->
+      <div class="group relative bg-white rounded-3xl p-12 text-center border-2 border-gray-200 hover:border-emerald-500 transition-all duration-500 shadow-lg hover:shadow-2xl">
+        <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-emerald-600 text-white rounded-full flex items-center justify-center text-3xl font-black shadow-2xl">
+          1
+        </div>
+        <svg class="w-20 h-20 mx-auto mb-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+        </svg>
+        <h3 class="text-3xl font-black text-gray-900 mb-6">Kontak Awal</h3>
+        <p class="text-lg text-gray-600 leading-relaxed">
+          Hubungi tim merchant Dunnak melalui WhatsApp resmi atau email.<br>
+          <span class="text-emerald-600 font-semibold">Respon dalam < 10 menit (jam operasional)</span>
+        </p>
+      </div>
+
+      <!-- Langkah 2 -->
+      <div class="group relative bg-white rounded-3xl p-12 text-center border-2 border-gray-200 hover:border-emerald-500 transition-all duration-500 shadow-lg hover:shadow-2xl">
+        <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-emerald-600 text-white rounded-full flex items-center justify-center text-3xl font-black shadow-2xl">
+          2
+        </div>
+        <svg class="w-20 h-20 mx-auto mb-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <h3 class="text-3xl font-black text-gray-900 mb-6">Verifikasi & Survey</h3>
+        <p class="text-lg text-gray-600 leading-relaxed">
+          Tim Dunnak akan melakukan verifikasi toko dan survey operasional.<br>
+          <span class="text-emerald-600 font-semibold">Kunjungan dalam 24 jam kerja</span>
+        </p>
+      </div>
+
+      <!-- Langkah 3 -->
+      <div class="group relative bg-white rounded-3xl p-12 text-center border-2 border-gray-200 hover:border-emerald-500 transition-all duration-500 shadow-lg hover:shadow-2xl">
+        <div class="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-emerald-600 text-white rounded-full flex items-center justify-center text-3xl font-black shadow-2xl">
+          3
+        </div>
+        <svg class="w-20 h-20 mx-auto mb-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <h3 class="text-3xl font-black text-gray-900 mb-6">Aktivasi & Operasional</h3>
+        <p class="text-lg text-gray-600 leading-relaxed">
+          Akun merchant diaktifkan, pelatihan singkat, dan toko langsung terhubung ke sistem Dunnak.<br>
+          <span class="text-emerald-600 font-semibold">Mulai terima order di hari yang sama</span>
         </p>
       </div>
     </div>
-    <div id="profile-container" class="profile-section hidden">
-      <div class="profile-banner"></div>
-      <div class="profile-content">
-        <h2 class="text-3xl font-bold text-center mb-8 text-gray-900"></h2>
-        <div class="flex justify-center mb-6">
-          <div class="profile-avatar">
-            <i class="fas fa-user"></i>
-          </div>
-        </div>
-        <div class="space-y-6">
-          <div>
-            <p class="text-sm font-medium text-gray-600">Nama</p>
-            <p id="profile-name" class="text-lg font-semibold text-gray-800"></p>
-          </div>
-          <div>
-            <p class="text-sm font-medium text-gray-600">Email</p>
-            <p id="profile-email" class="text-lg font-semibold text-gray-800"></p>
-          </div>
-          <div>
-            <p class="text-sm font-medium text-gray-600">Jenis Akun</p>
-            <p id="profile-account-type" class="text-lg font-semibold text-gray-800"><span class="account-badge">Personal</span></p>
-          </div>
-          <div>
-            <p class="text-sm font-medium text-gray-600">ID Pengguna</p>
-            <p id="profile-user-id" class="text-lg font-semibold text-gray-800"></p>
-          </div>
-          <div>
-            <p class="text-sm font-medium text-gray-600">Terakhir Masuk</p>
-            <p id="profile-last-login" class="text-lg font-semibold text-gray-800"></p>
-          </div>
-          <button id="logout-button" class="bg-rose-600 text-white hover:bg-rose-700 focus:ring-2 focus:ring-rose-500">Keluar</button>
-        </div>
+
+    <!-- Info Tambahan -->
+    <div class="mt-24 text-center">
+      <p class="text-xl text-gray-600 max-w-5xl mx-auto leading-relaxed">
+        <strong class="text-emerald-600">Proses pendaftaran 100% gratis</strong> • Tidak ada biaya aktivasi • Tidak ada komisi tersembunyi<br>
+        Seluruh tahapan dilakukan oleh tim resmi Dunnak untuk menjamin kualitas layanan.
+      </p>
+    </div>
+  </div>
+</section>
+
+  <!-- 7. CTA DAFTAR -->
+  <section id="daftar" class="py-40 bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 text-white text-center">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-6xl lg:text-8xl font-black mb-12">Jadi Mitra Dunnak Sekarang</h2>
+      <p class="text-3xl lg:text-4xl mb-20 opacity-95">
+        Pendaftaran <strong class="text-yellow-300">100% GRATIS</strong> • Aktivasi <strong class="text-yellow-300">dalam 24 Jam</strong>
+      </p>
+      <div class="flex flex-col lg:flex-row gap-10 justify-center">
+        <a href="https://wa.me/6281234567890?text=Halo%20saya%20mau%20daftar%20merchant%20Dunnak" target="_blank"
+           class="inline-flex items-center justify-center gap-8 bg-white text-emerald-700 font-black text-3xl lg:text-5xl px-24 py-12 rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-110 transition glow">
+          <i class="fab fa-whatsapp text-6xl lg:text-8xl"></i>
+          Daftar via WhatsApp
+        </a>
+        <a href="mailto:merchant@dunnak.com" 
+           class="inline-flex items-center justify-center gap-8 bg-emerald-700  hover:bg-emerald-800 text-white font-black text-3xl lg:text-5xl px-24 py-12 rounded-full border-8 border-white/30 shadow-2xl transition">
+          <i class="fas fa-envelope text-5xl lg:text-7xl"></i>
+          Kirim Email
+        </a>
       </div>
     </div>
-  </main>
+  </section>
+
   <!-- FOOTER -->
-  <footer class="bg-gray-900 text-white py-12">
-    <div class="max-w-7xl mx-auto px-4">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div class="md:col-span-2">
-          <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEioCgC6JQ-pd6mvQ1OvlJSOGqd8-45q7P9K0ejBvIt-XEXcayAs6zpFN6c1D2ejDgR72xdGDZL9yt2yLWl7oRDHQ8Gf2L3Q35VNFlimqORpaOgBDiqJMBGfTLHokc0dFwezZ85HLBx7_rGveEOMDI78CG81kg_mpczYMHdYapbijiLVpqPj2Ep_QrPJwx6H/s3264/20250927_164837.png" alt="Dunnak Logo" class="h-10 w-auto mb-4" loading="lazy" onerror="this.style.background='linear-gradient(to right, #10b981, #059669);'" />
-          <p class="text-sm text-gray-300 mb-4 font-medium">dunnak.com adalah penyedia layanan pemesanan makanan no.1 di kalibening dan sekitarnya</p>
-          </div>
-          </div>
-        </div>
-        <div>
-        </div>
-      </div>
-      <div class="mt-8 border-t border-gray-700 pt-6 text-center text-sm text-gray-400">
-        <p>&copy; 2025 Dervo Digital Niaga</p>
-        <p class="mt-2">Dibuat dengan <span class="text-red-500">&hearts;</span> untuk pecinta kuliner.</p>
-      </div>
+  <footer class="bg-black py-20 text-center">
+    <div class="max-w-7xl mx-auto px-6">
+      <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi6-JhY6g9H4ggtXPHCO7pTjErtprKfSRlgttoFgT4LcX-O2ROw-oxj7Ntr3r7cY6TdN5AMrwDJ7hyfyU1DI4ASMZ_Mw2chnMaXIDiWHZ-8X3H1Lhz-PjI7KIh2716aY_g4FIxL2Fe4OxBsIEAyE52WrLYS-p1La1U_mMHuVcQvFK-Np9l-ZixakqnZjx44/s3264/20251120_174337.png" 
+           alt="Dunnak" class="h-16 mx-auto mb-8">
+      <p class="text-3xl font-black text-emerald-400">
+        © 2025 DERVO DIGITAL NIAGA • Kalibening, Indonesia
+      </p>
+      <p class="text-gray-500 mt-4 text-lg">
+        Startup pengantaran berbasis AI • Memberdayakan UMKM Indonesia
+      </p>
     </div>
   </footer>
-  <!-- TOAST -->
-  <div id="toast" class="fixed hidden" role="alert" aria-live="assertive"></div>
-  <!-- SCRIPT -->
-  <script>
-    const SUPABASE_URL = "";
-    const SUPABASE_ANON = "";
-    
-    // Operator can customize this URL to match platform branding
-    const BANNER_IMAGE_URL = "data:image/jpeg;base64,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"; // Change this to your branding image URL
-    
-    if (!SUPABASE_URL || !SUPABASE_ANON) {
-      showToast("Fitur sedang dalam pengembangan", "error");
-      throw new Error("Supabase credential belum diisi. Ganti SUPABASE_URL dan SUPABASE_ANON.");
-    }
-    
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-    let isLoginMode = true;
-    let captchaCode = '';
-    let captchaToken = '';
-    let captchaTimestamp = 0;
-
-    function showToast(text, type = "success", duration = 3000) {
-      const toast = document.getElementById("toast");
-      const icon = type === "success" ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-circle"></i>';
-      toast.innerHTML = `${icon} ${text}`;
-      toast.className = `fixed ${type} show`;
-      setTimeout(() => {
-        toast.classList.remove("show");
-        setTimeout(() => {
-          toast.className = "fixed hidden";
-          toast.innerHTML = "";
-        }, 300);
-      }, duration);
-    }
-
-    function clearErrors() {
-      document.getElementById("email-error").classList.add("hidden");
-      document.getElementById("password-error").classList.add("hidden");
-      document.getElementById("name-error").classList.add("hidden");
-      document.getElementById("captcha-error").classList.add("hidden");
-    }
-
-    function validateEmail(email) {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
-
-    function validatePassword(password) {
-      return password.length >= 7 && password.length <= 50;
-    }
-
-    function validateName(name) {
-      return name.trim().length > 0;
-    }
-
-    function generateToken() {
-      return Array(16).fill(0).map(() => Math.random().toString(36).substr(2, 9)).join('');
-    }
-
-    function generateCaptcha() {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      captchaCode = '';
-      for (let i = 0; i < 6; i++) {
-        captchaCode += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      captchaToken = generateToken();
-      captchaTimestamp = Date.now();
-
-      const canvas = document.getElementById("captcha-canvas");
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Add noise
-      for (let i = 0; i < 50; i++) {
-        ctx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.3})`;
-        ctx.beginPath();
-        ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 1, 0, 2 * Math.PI);
-        ctx.fill();
-      }
-
-      // Add lines
-      for (let i = 0; i < 3; i++) {
-        ctx.strokeStyle = `rgba(0, 0, 0, ${Math.random() * 0.5 + 0.2})`;
-        ctx.beginPath();
-        ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
-        ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
-        ctx.stroke();
-      }
-
-      // Draw distorted text
-      ctx.font = "24px monospace";
-      ctx.fillStyle = "#1f2937";
-      for (let i = 0; i < captchaCode.length; i++) {
-        ctx.save();
-        ctx.translate(20 + i * 20, 35 + Math.random() * 10 - 5);
-        ctx.rotate((Math.random() - 0.5) * 0.3);
-        ctx.fillText(captchaCode[i], 0, 0);
-        ctx.restore();
-      }
-
-      document.getElementById("captcha").value = '';
-    }
-
-    function generateAudioCaptcha() {
-      const utterance = captchaCode.split('').join(' ');
-      const audio = new Audio(`data:audio/wav;base64,${btoa(utterance)}`);
-      audio.play();
-    }
-
-    function validateCaptcha(input, token, timestamp) {
-      const timeValid = (Date.now() - timestamp) < 120000; // 2 minutes
-      return timeValid && input.trim().toUpperCase() === captchaCode.toUpperCase() && token === captchaToken;
-    }
-
-    function formatTimestamp(timestamp) {
-      if (!timestamp) return "—";
-      const date = new Date(timestamp);
-      const options = {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        timeZone: 'Asia/Jakarta'
-      };
-      return date.toLocaleString('id-ID', options).replace(',', '');
-    }
-
-    function toggleAuthMode() {
-      isLoginMode = !isLoginMode;
-      const authTitle = document.getElementById("auth-title");
-      const authSubmit = document.getElementById("auth-submit");
-      const authToggleText = document.getElementById("auth-toggle-text");
-      const authToggle = document.getElementById("auth-toggle");
-      const registerName = document.getElementById("register-name");
-      clearErrors();
-      document.getElementById("email").value = "";
-      document.getElementById("password").value = "";
-      document.getElementById("name").value = "";
-      document.getElementById("captcha").value = "";
-      document.getElementById("password").type = "password";
-      document.getElementById("password-toggle").innerHTML = '<i class="fas fa-eye"></i>';
-      generateCaptcha();
-      if (isLoginMode) {
-        authTitle.textContent = "Masuk ke Dunnak";
-        authSubmit.textContent = "Masuk";
-        authToggleText.textContent = "Belum punya akun?";
-        authToggle.textContent = "Daftar";
-        registerName.classList.add("hidden");
-      } else {
-        authTitle.textContent = "Daftar ke Dunnak";
-        authSubmit.textContent = "Daftar";
-        authToggleText.textContent = "Sudah punya akun?";
-        authToggle.textContent = "Masuk";
-        registerName.classList.remove("hidden");
-      }
-    }
-
-    function togglePasswordVisibility() {
-      const passwordInput = document.getElementById("password");
-      const toggleIcon = document.getElementById("password-toggle");
-      if (passwordInput.type === "password") {
-        passwordInput.type = "text";
-        toggleIcon.innerHTML = '<i class="fas fa-eye-slash"></i>';
-        toggleIcon.setAttribute("aria-label", "Sembunyikan kata sandi");
-      } else {
-        passwordInput.type = "password";
-        toggleIcon.innerHTML = '<i class="fas fa-eye"></i>';
-        toggleIcon.setAttribute("aria-label", "Tampilkan kata sandi");
-      }
-    }
-
-    async function checkAuthState() {
-      try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        if (user) {
-          document.getElementById("auth-container").classList.add("hidden");
-          document.getElementById("profile-container").classList.remove("hidden");
-          document.getElementById("profile-name").textContent = user.user_metadata?.name || "Pengguna";
-          document.getElementById("profile-email").textContent = user.email || "—";
-          document.getElementById("profile-account-type").innerHTML = `<span class="account-badge">${user.user_metadata?.account_type || "Personal"}</span>`;
-          document.getElementById("profile-user-id").textContent = user.id || "—";
-          document.getElementById("profile-last-login").textContent = formatTimestamp(user.last_sign_in_at);
-          
-          // Set custom banner image
-          const banner = document.querySelector('.profile-banner');
-          if (BANNER_IMAGE_URL) {
-            banner.style.backgroundImage = `url('${BANNER_IMAGE_URL}')`;
-            // Fallback to gradient if image fails
-            const img = new Image();
-            img.src = BANNER_IMAGE_URL;
-            img.onerror = () => {
-              banner.style.backgroundImage = 'linear-gradient(to right, #10b981, #059669)';
-            };
-          } else {
-            banner.style.backgroundImage = 'linear-gradient(to right, #10b981, #059669)';
-          }
-        } else {
-          document.getElementById("auth-container").classList.remove("hidden");
-          document.getElementById("profile-container").classList.add("hidden");
-          generateCaptcha();
-        }
-      } catch (e) {
-        showToast("Gagal memeriksa status autentikasi.", "error");
-        console.error("checkAuthState failed", e);
-      }
-    }
-
-    async function handleAuth() {
-      try {
-        clearErrors();
-        const email = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value;
-        const name = document.getElementById("name").value.trim();
-        const captchaInput = document.getElementById("captcha").value;
-
-        if (!validateEmail(email)) {
-          document.getElementById("email-error").textContent = "Email tidak valid.";
-          document.getElementById("email-error").classList.remove("hidden");
-          generateCaptcha();
-          return;
-        }
-
-        if (!validatePassword(password)) {
-          document.getElementById("password-error").textContent = "Kata sandi harus 7-50 karakter.";
-          document.getElementById("password-error").classList.remove("hidden");
-          generateCaptcha();
-          return;
-        }
-
-        if (!isLoginMode && !validateName(name)) {
-          document.getElementById("name-error").textContent = "Nama harus diisi.";
-          document.getElementById("name-error").classList.remove("hidden");
-          generateCaptcha();
-          return;
-        }
-
-        if (!validateCaptcha(captchaInput, captchaToken, captchaTimestamp)) {
-          document.getElementById("captcha-error").textContent = "Kode CAPTCHA salah atau kadaluarsa.";
-          document.getElementById("captcha-error").classList.remove("hidden");
-          generateCaptcha();
-          return;
-        }
-
-        if (isLoginMode) {
-          const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email,
-            password,
-          });
-          if (error) {
-            showToast("Gagal masuk: " + error.message, "error");
-            generateCaptcha();
-            return;
-          }
-          showToast("Berhasil masuk!", "success");
-          checkAuthState();
-        } else {
-          const { data, error } = await supabaseClient.auth.signUp({
-            email,
-            password,
-            options: {
-              data: { name, account_type: "Personal" }
-            }
-          });
-          if (error) {
-            showToast("Gagal mendaftar: " + error.message, "error");
-            generateCaptcha();
-            return;
-          }
-          showToast("Pendaftaran berhasil! Silakan masuk.", "success");
-          toggleAuthMode();
-        }
-      } catch (e) {
-        showToast("Terjadi kesalahan. Coba lagi.", "error");
-        console.error("handleAuth failed", e);
-        generateCaptcha();
-      }
-    }
-
-    async function handleLogout() {
-      try {
-        const { error } = await supabaseClient.auth.signOut();
-        if (error) {
-          showToast("Gagal keluar: " + error.message, "error");
-          return;
-        }
-        showToast("Berhasil keluar!", "success");
-        checkAuthState();
-      } catch (e) {
-        showToast("Gagal keluar. Coba lagi.", "error");
-        console.error("handleLogout failed", e);
-      }
-    }
-
-    // Event listeners
-    document.getElementById("auth-toggle").addEventListener("click", toggleAuthMode);
-    document.getElementById("auth-submit").addEventListener("click", handleAuth);
-    document.getElementById("logout-button").addEventListener("click", handleLogout);
-    document.getElementById("password-toggle").addEventListener("click", togglePasswordVisibility);
-    document.getElementById("captcha-refresh").addEventListener("click", generateCaptcha);
-    document.getElementById("captcha-audio").addEventListener("click", generateAudioCaptcha);
-
-    // Accessibility
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && document.activeElement.tagName === "INPUT") {
-        handleAuth();
-      }
-      if (e.key === "Escape") {
-        clearErrors();
-        document.getElementById("email").value = "";
-        document.getElementById("password").value = "";
-        document.getElementById("name").value = "";
-        document.getElementById("captcha").value = "";
-        document.getElementById("password").type = "password";
-        document.getElementById("password-toggle").innerHTML = '<i class="fas fa-eye"></i>';
-        document.getElementById("password-toggle").setAttribute("aria-label", "Tampilkan kata sandi");
-        generateCaptcha();
-      }
-    });
-
-    // Initialize
-    checkAuthState();
-  </script>
+</body>
+</html>
